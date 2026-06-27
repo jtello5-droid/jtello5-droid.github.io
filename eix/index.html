@@ -1,1 +1,1108 @@
-sadasd
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eix cronològic · Història de la filosofia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070a12; --bg2:#0b1020; --panel:#121829; --panel2:#171f33; --glass:#0e1424cc;
+    --ink:#eef2fb; --dim:#97a3bd; --faint:#5d6883; --line:#243049; --line2:#2f3d5c;
+    --phi:#ffc94d; --pol:#ff6b6b; --rel:#bd93ff; --sci:#2fe0c8; --gold:#ffc94d;
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --ease:cubic-bezier(.33,.02,.12,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  #space{position:fixed;inset:0;z-index:0;display:block}
+  .nebula{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(80% 60% at 78% -10%, #21407a40, transparent 60%),
+               radial-gradient(70% 60% at 5% 110%, #6b3d8a35, transparent 55%),
+               radial-gradient(90% 70% at 50% 120%, #1d6d6640, transparent 60%)}
+
+  /* TOPBAR */
+  .top{position:fixed;top:0;left:0;right:0;z-index:40;height:58px;display:flex;align-items:center;gap:1.2rem;
+    padding:0 1.3rem;background:var(--glass);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .brand{font-family:var(--disp);font-weight:700;font-size:1.02rem;letter-spacing:-.01em;white-space:nowrap;display:flex;align-items:center;gap:.55rem}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+  .eras{display:flex;gap:.25rem}
+  .era{font-family:var(--body);font-size:.78rem;font-weight:600;color:var(--dim);background:transparent;border:1px solid transparent;
+    padding:.36rem .7rem;border-radius:9px;cursor:pointer;transition:.25s var(--ease);display:flex;gap:.45rem;align-items:center;white-space:nowrap}
+  .era .rn{font-family:var(--disp);font-weight:700;opacity:.55;font-size:.74rem}
+  .era:hover{background:#ffffff0d;color:var(--ink)}
+  .era.on{background:linear-gradient(180deg,#ffd873,#f0b021);color:#241a00;border-color:#ffd873;box-shadow:0 0 18px -4px var(--gold)}
+  .era.soon{opacity:.45;cursor:not-allowed}
+  .legend{display:flex;gap:.9rem;margin-left:auto;flex-wrap:wrap}
+  .lg{display:flex;align-items:center;gap:.38rem;font-size:.72rem;color:var(--dim);font-weight:500;white-space:nowrap}
+  .lg i{width:10px;height:10px;border-radius:50%;display:block}
+
+  /* STAGE */
+  .stage{position:fixed;top:58px;left:0;right:0;bottom:0;z-index:5;overflow:auto;cursor:grab}
+  .stage.drag{cursor:grabbing}
+  .stage::-webkit-scrollbar{height:11px;width:11px}
+  .stage::-webkit-scrollbar-thumb{background:var(--line2);border-radius:10px}
+  .timeline{position:relative;min-width:max-content}
+
+  .gridc{position:absolute;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,#2a3a5c80 12%,#2a3a5c80 88%,transparent);z-index:1}
+  .clabel{position:absolute;transform:translateX(-50%);font-family:var(--disp);font-weight:700;font-size:1.05rem;color:#5d6b8e;letter-spacing:.04em;z-index:1;text-align:center}
+  .clabel .sub{display:block;font-family:var(--body);font-weight:600;font-size:.6rem;color:var(--faint);letter-spacing:.14em;margin-top:2px}
+
+  .axis{position:absolute;left:0;right:0;height:3px;border-radius:3px;z-index:2;
+    background:linear-gradient(90deg,transparent 0%, #2fe0c855 6%, #ffc94d66 50%, #ff6b6b55 94%, transparent 100%);box-shadow:0 0 22px -4px #ffc94d55}
+
+  .node{position:absolute;transform:translateX(-50%);z-index:5;cursor:pointer}
+  .node .conn{position:absolute;left:50%;width:2px;background:currentColor;opacity:.32;transform:translateX(-50%);z-index:-1}
+  .chip{position:relative;display:flex;flex-direction:column;gap:2px;min-width:96px;max-width:188px;
+    background:var(--panel);border:1px solid var(--line2);border-left:3px solid currentColor;border-radius:11px;
+    padding:8px 11px;transition:.22s var(--ease);box-shadow:0 6px 18px -10px #000}
+  .node:hover .chip{transform:translateY(-3px) scale(1.03);box-shadow:0 0 0 1px currentColor,0 10px 30px -10px currentColor}
+  .chip .yr{font-family:var(--disp);font-weight:700;font-size:.72rem;color:currentColor;letter-spacing:.01em}
+  .chip .nm{font-size:.82rem;font-weight:600;color:var(--ink);line-height:1.18}
+  .chip .sb{font-size:.68rem;color:var(--faint);line-height:1.15}
+  .node.thought .chip{min-width:120px;background:var(--panel2)}
+  .node.thought .chip .nm{font-family:var(--disp);font-weight:600;font-size:.92rem}
+  .node .orb{position:absolute;left:50%;width:11px;height:11px;border-radius:50%;background:currentColor;
+    transform:translateX(-50%);box-shadow:0 0 12px currentColor,0 0 0 4px var(--bg)}
+
+  .scrollhint{position:fixed;right:1.1rem;bottom:.9rem;z-index:8;font-size:.72rem;color:var(--faint);
+    background:var(--glass);backdrop-filter:blur(6px);border:1px solid var(--line);padding:.4rem .85rem;border-radius:20px;pointer-events:none}
+  .keys{position:fixed;left:1.1rem;bottom:.9rem;z-index:8;font-size:.72rem;color:var(--faint)}
+  .keys kbd{font-family:var(--body);border:1px solid var(--line2);border-radius:5px;padding:.02rem .32rem;color:var(--dim);background:#0e1424}
+
+  /* DETAIL */
+  .detail{position:fixed;inset:0;z-index:60;display:none;background:#070a12e8;backdrop-filter:blur(8px)}
+  .detail.on{display:flex;align-items:center;justify-content:center;padding:clamp(10px,3vh,40px) clamp(10px,3vw,48px)}
+  .card3d{width:min(1080px,100%);max-height:92vh;display:grid;grid-template-columns:40% 60%;
+    background:linear-gradient(180deg,#101728,#0c1220);border:1px solid var(--line2);border-radius:22px;overflow:hidden;
+    box-shadow:0 40px 120px -30px #000,0 0 0 1px #ffffff08;transform:perspective(1600px) rotateX(.6deg)}
+  .media{position:relative;overflow:hidden;min-height:260px;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(120% 100% at 30% 20%, var(--cc), #0a0f1c 78%)}
+  .media .glowill{width:62%;height:62%;filter:drop-shadow(0 0 22px var(--cc))}
+  .media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .media .badge{position:absolute;top:16px;left:16px;font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:#fff;background:#00000055;border:1px solid #ffffff33;padding:.3rem .7rem;border-radius:30px;backdrop-filter:blur(4px)}
+  .panel{display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+  .pbody{overflow-y:auto;padding:36px clamp(24px,3.5vw,52px) 18px}
+  .pk{font-size:.72rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--cc);margin-bottom:.5rem}
+  .detail h2{font-family:var(--disp);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.04;letter-spacing:-.02em}
+  .drole{font-size:1rem;color:var(--dim);margin-top:.3rem;font-weight:500}
+  .sec{margin-top:1.5rem}
+  .sec h4{font-size:.7rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;display:flex;align-items:center;gap:.55rem}
+  .sec h4::before{content:"";width:20px;height:2px;background:var(--gold);border-radius:2px}
+  .sec p{font-size:1.02rem;line-height:1.62;color:#cdd6ea}
+  .sec p strong{color:#fff;font-weight:600}
+  .sec p em{font-style:normal;color:#fff;border-bottom:1.5px solid var(--cc);padding-bottom:1px}
+  .nav{display:flex;align-items:center;gap:.6rem;padding:.85rem clamp(24px,3.5vw,52px);border-top:1px solid var(--line);background:#0e1424cc;backdrop-filter:blur(6px)}
+  .nav .pos{flex:1;font-size:.76rem;color:var(--dim);font-variant-numeric:tabular-nums}
+  .nb{height:38px;padding:0 .95rem;border:1px solid var(--line2);background:var(--panel2);border-radius:9px;color:var(--ink);
+    font-family:var(--body);font-size:.82rem;font-weight:600;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.4rem}
+  .nb:hover{border-color:var(--cc);color:var(--cc);box-shadow:0 0 14px -6px var(--cc)}
+  .nb:disabled{opacity:.34;cursor:default}
+  .closeb{position:absolute;top:14px;right:16px;z-index:5;width:38px;height:38px;border-radius:50%;border:1px solid var(--line2);
+    background:#0e1424cc;color:var(--ink);font-size:1.05rem;cursor:pointer;backdrop-filter:blur(6px)}
+  .closeb:hover{background:var(--pol);color:#fff;border-color:var(--pol)}
+
+  .toast{position:fixed;left:50%;bottom:1.4rem;transform:translateX(-50%) translateY(20px);z-index:80;opacity:0;
+    background:#1a2238;color:var(--ink);border:1px solid var(--line2);padding:.7rem 1.2rem;border-radius:30px;font-size:.85rem;transition:.3s var(--ease);pointer-events:none}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* franja de subperíodes (A) */
+  .periodband{position:absolute;left:0;height:54px;z-index:3}
+  .bandcap{position:absolute;left:10px;font-size:.64rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);z-index:3}
+  .pseg{position:absolute;top:0;height:54px;border-radius:11px;border:1px solid;display:flex;flex-direction:column;justify-content:center;
+    padding:0 15px;cursor:pointer;overflow:hidden;transition:.2s var(--ease)}
+  .pseg:hover{transform:translateY(-2px);filter:brightness(1.3)}
+  .pseg .pn{font-family:var(--disp);font-weight:700;font-size:.94rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pseg .pc{font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+
+  /* botó característiques (B) */
+  .charbtn{font-family:var(--body);font-size:.78rem;font-weight:600;color:#241a00;background:linear-gradient(180deg,#ffe08a,#f2c14e);
+    border:1px solid #ffe08a;padding:.36rem .8rem;border-radius:9px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.4rem;white-space:nowrap;box-shadow:0 0 16px -6px var(--gold)}
+  .charbtn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+
+  /* modal info (subperíode / característiques) */
+  .info{position:fixed;inset:0;z-index:62;display:none;align-items:center;justify-content:center;background:#070a12e0;backdrop-filter:blur(8px);padding:5vh 5vw}
+  .info.on{display:flex}
+  .infocard{position:relative;max-width:780px;width:100%;max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,#101728,#0c1220);
+    border:1px solid var(--line2);border-top:4px solid var(--cc,var(--gold));border-radius:20px;padding:38px clamp(24px,4vw,52px);box-shadow:0 40px 120px -30px #000}
+  .infocard .pk{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--cc,var(--gold))}
+  .infocard h2{font-family:var(--disp);font-weight:700;font-size:2rem;letter-spacing:-.02em;margin:.3rem 0 .5rem}
+  .infocard .sec{margin-top:1.25rem}
+  .infocard .sec h4{font-size:.7rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--cc,var(--gold));margin-bottom:.4rem;display:flex;align-items:center;gap:.5rem}
+  .infocard .sec h4::before{content:"";width:18px;height:2px;background:currentColor}
+  .infocard .sec p{font-size:1.02rem;line-height:1.6;color:#cdd6ea}
+  .infocard p em{font-style:normal;color:#fff;border-bottom:1.5px solid var(--cc,var(--gold));padding-bottom:1px}
+  .infocard p strong{color:#fff;font-weight:600}
+  .trait{padding:.85rem 0;border-top:1px solid var(--line)}
+  .trait:first-of-type{border-top:none}
+  .trait b{font-family:var(--disp);font-size:1.04rem;color:#fff;display:block;margin-bottom:.18rem}
+  .trait span{font-size:.98rem;line-height:1.55;color:#bcc6dd}
+  .trait span em{font-style:normal;color:#fff}
+  .trait span strong{color:#fff;font-weight:600}
+  .closeb2{position:absolute;top:14px;right:16px;z-index:5;width:38px;height:38px;border-radius:50%;border:1px solid var(--line2);
+    background:#0e1424cc;color:var(--ink);font-size:1.05rem;cursor:pointer}
+  .closeb2:hover{background:var(--pol);color:#fff;border-color:var(--pol)}
+  @media (max-width:780px){.card3d{grid-template-columns:1fr;grid-template-rows:32% 68%}.legend{display:none}.era span:not(.rn){display:none}}
+</style>
+</head>
+<body>
+<canvas id="space"></canvas>
+<div class="nebula"></div>
+
+<header class="top">
+  <div class="brand"><span class="dot"></span><span id="brandtxt">Eix · Filosofia antiga</span></div>
+  <nav class="eras" id="eras"></nav>
+  <button class="charbtn" id="charbtn">✦ Característiques</button>
+  <div class="legend" id="legend"></div>
+</header>
+
+<div class="stage" id="stage"><div class="timeline" id="timeline"></div></div>
+<div class="scrollhint">Arrossega / roda per recórrer els segles →</div>
+<div class="keys"><kbd>←</kbd> <kbd>→</kbd> moure · <kbd>Esc</kbd> tancar</div>
+
+<div class="detail" id="detail">
+  <button class="closeb" id="closeb">✕</button>
+  <div class="card3d" id="card3d">
+    <div class="media" id="media"></div>
+    <div class="panel">
+      <div class="pbody" id="pbody"></div>
+      <div class="nav"><button class="nb" id="prev">← Anterior</button><div class="pos" id="pos"></div><button class="nb" id="next">Següent →</button></div>
+    </div>
+  </div>
+</div>
+<div class="info" id="info"><button class="closeb2" id="infoclose">✕</button><div class="infocard" id="infocard"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ IL·LUSTRACIONS ============ */
+function ILL(name,c){
+  const s=`stroke="${c}" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
+  const f=`fill="${c}"`; const V=`viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg"`;
+  const g={
+    scroll:`<path ${s} d="M30 18h54a8 8 0 0 1 8 8v40a8 8 0 0 0 8 8H40a8 8 0 0 1-8-8z"/><path ${s} d="M30 18a8 8 0 0 0-8 8 8 8 0 0 0 8 8h8"/><path ${s} d="M44 34h36M44 46h36M44 58h24" stroke-width="2.2"/>`,
+    cosmos:`<circle cx="60" cy="42" r="5" ${f}/><circle ${s} cx="60" cy="42" r="14"/><circle ${s} cx="60" cy="42" r="24"/><circle ${s} cx="60" cy="42" r="34"/><circle cx="60" cy="8" r="3" ${f}/><circle cx="94" cy="42" r="3" ${f}/>`,
+    atom:`<circle cx="60" cy="42" r="6" ${f}/><ellipse ${s} cx="60" cy="42" rx="40" ry="15"/><ellipse ${s} cx="60" cy="42" rx="40" ry="15" transform="rotate(60 60 42)"/><ellipse ${s} cx="60" cy="42" rx="40" ry="15" transform="rotate(120 60 42)"/>`,
+    athens:`<path ${s} d="M18 70h84"/><path ${s} d="M24 70V36m13 34V36m13 34V36m13 34V36m13 34V36m13 34V36"/><path ${s} d="M14 36h92l-46-20z"/><path ${s} d="M18 36h84" stroke-width="2.2"/>`,
+    globe:`<circle ${s} cx="56" cy="42" r="30"/><path ${s} d="M26 42h60M56 12v60" stroke-width="2.2"/><ellipse ${s} cx="56" cy="42" rx="14" ry="30"/><path ${s} d="M92 18l16-7-5 16" stroke-width="2.4"/>`,
+    cave:`<path ${s} d="M14 72c0-40 12-52 40-52"/><path ${s} d="M14 72h40"/><circle cx="34" cy="48" r="5" ${f}/><path ${s} d="M34 53v14"/><circle ${s} cx="92" cy="30" r="9"/><path ${s} d="M92 14v6m0 20v6m-22-12h6m32 0h6" stroke-width="2.2"/>`,
+    arch:`<path ${s} d="M20 72V30a40 40 0 0 1 80 0v42"/><path ${s} d="M34 72V36a26 26 0 0 1 52 0v36"/><path ${s} d="M14 72h92"/>`,
+    cross:`<path ${s} d="M60 14v56M40 36h40"/><circle ${s} cx="60" cy="30" r="11"/>`,
+    book:`<path ${s} d="M60 24C50 18 30 18 22 22v44c8-4 28-4 38 2 10-6 30-6 38-2V22c-8-4-28-4-38 2z"/><path ${s} d="M60 24v44" stroke-width="2.2"/>`,
+    laurel:`<path ${s} d="M60 74C36 70 26 50 30 24"/><path ${s} d="M60 74C84 70 94 50 90 24"/><path ${s} d="M34 34c6 2 10-2 11-8m-7 18c6 2 11-2 12-9m-8 19c6 1 11-3 12-9M86 34c-6 2-10-2-11-8m7 18c-6 2-11-2-12-9m8 19c-6 1-11-3-12-9" stroke-width="2.2"/>`,
+    river:`<path ${s} d="M10 30q18-12 36 0t36 0 28 0"/><path ${s} d="M10 46q18-12 36 0t36 0 28 0"/><path ${s} d="M10 62q18-12 36 0t36 0 28 0"/>`,
+    cup:`<path ${s} d="M34 30h52l-6 22a20 20 0 0 1-40 0z"/><path ${s} d="M60 74V64M48 74h24" stroke-width="2.6"/><path ${s} d="M34 30c-8 0-12 6-8 12m60-12c8 0 12 6 8 12" stroke-width="2.4"/>`,
+    garden:`<path ${s} d="M60 74V40"/><path ${s} d="M60 52c-10 0-18-6-18-16 12 0 18 6 18 16zM60 44c8 0 14-5 14-13-10 0-14 5-14 13z"/><circle ${s} cx="60" cy="26" r="9"/><path ${s} d="M40 74h40" stroke-width="2.6"/>`,
+    balance:`<path ${s} d="M60 16v48"/><path ${s} d="M30 28h60"/><path ${s} d="M30 28l-9 18h18zM90 28l-9 18h18z"/><path ${s} d="M44 64h32" stroke-width="2.4"/><circle cx="60" cy="14" r="3" ${f}/>`,
+    battle:`<path ${s} d="M60 14l16 8v18c0 16-16 26-16 26s-16-10-16-26V22z"/><path ${s} d="M60 30v26" stroke-width="2.4"/><path ${s} d="M30 18l16 14M90 18L74 32" stroke-width="2.4"/>`,
+    coin:`<circle ${s} cx="60" cy="42" r="28"/><circle ${s} cx="60" cy="42" r="20" stroke-width="2"/><path ${s} d="M52 42h16M60 34v16" stroke-width="2.4"/>`,
+    helm:`<path ${s} d="M34 50c0-20 12-30 26-30s26 10 26 30"/><path ${s} d="M34 50h52v8a18 18 0 0 1-26 16 18 18 0 0 1-26-16z"/><path ${s} d="M60 20v-8" stroke-width="2.4"/><path ${s} d="M58 12h4l-2 8z" ${f}/>`,
+    snake:`<path ${s} d="M60 12v60"/><path ${s} d="M60 24c-12 0-12 10 0 10s12 10 0 10-12 10 0 10"/>`
+  };
+  return `<svg ${V}>${g[name]||g.laurel}</svg>`;
+}
+function MONO(name,c){
+  const ini=name.replace(/^(El |La |L'|Els |Les )/,'').split(/[ ·]/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  return `<svg viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="42" r="28" fill="none" stroke="${c}" stroke-width="2.4"/><circle cx="60" cy="42" r="34" fill="none" stroke="${c}" stroke-width="1" opacity=".4"/><text x="60" y="43" fill="${c}" font-family="Space Grotesk, sans-serif" font-weight="700" font-size="26" text-anchor="middle" dominant-baseline="central">${ini}</text></svg>`;
+}
+
+/* ============ CATEGORIES ============ */
+const CAT={phi:{name:"Pensament",v:"--phi",c:"#ffc94d"},pol:{name:"Política i guerra",v:"--pol",c:"#ff6b6b"},rel:{name:"Religió",v:"--rel",c:"#bd93ff"},sci:{name:"Ciència i tècnica",v:"--sci",c:"#2fe0c8"}};
+
+/* ============ DADES PER ÈPOCA ============ */
+const ERA_DATA = {
+  antiga: {
+    brand: 'Filosofia antiga',
+    ymin: -820, ymax: 560, ppy: 6,
+    cyStart: -800, cyEnd: 500,
+    char: { h: 'La filosofia antiga', c: '#ffc94d', intro: `Trets de fons que comparteixen, en graus diferents, des dels milesis fins al neoplatonisme —i que canviaran amb l'etapa següent.` },
+    items: [
+// ---- s. VIII–VII aC ----
+{y:-800,date:"c. 800 aC",t:"context",cat:"sci",name:"L'alfabet grec",sub:"escriptura fonètica",ill:"scroll",
+ lead:"Els grecs adapten l'alfabet dels <strong>fenicis</strong> i hi afegeixen les vocals: una escriptura senzilla i fàcil d'aprendre, no reservada a uns escribes. Per primer cop el saber es pot <strong>fixar, copiar i criticar</strong>.",
+ link:"Sense una escriptura accessible no hi ha tradició de debat públic: és una de les condicions que faran possible el pas del mite al <em>logos</em>."},
+{y:-750,date:"s. VIII–VII aC",t:"thought",cat:"phi",name:"El pensament mític",sub:"Homer · Hesíode",ill:"scroll",
+ lead:"El mite explica el món <strong>narrant-ne l'origen</strong>: quins déus engendren què. Hesíode (<em>Teogonia</em>) fixa un sistema comú de déus antropomorfs. La seva garantia és l'<strong>autoritat</strong> de la tradició i del poeta inspirat, no la demostració.",
+ link:"No és «irracional»: és una altra forma de donar sentit. Quan la pregunta passa de <em>qui</em> va fer el món a <em>de què està fet i per què canvia</em>, naixerà la filosofia."},
+{y:-660,date:"c. 700–600 aC",t:"context",cat:"sci",name:"Sabers d'Orient",sub:"Babilònia · Egipte",ill:"cosmos",
+ lead:"Els grecs hereten l'<strong>astronomia babilònica</strong> (registres d'eclipsis) i la <strong>geometria egípcia</strong> (per mesurar terres després de les crescudes del Nil). Tales ja predirà un eclipsi amb dades babilòniques.",
+ link:"La filosofia natural neix d'aquest contacte: els grecs transformen tècniques pràctiques orientals en <strong>preguntes teòriques</strong> generals."},
+{y:-600,date:"c. 600 aC",t:"context",cat:"sci",name:"La moneda encunyada",sub:"Lídia",ill:"coin",
+ lead:"A <strong>Lídia</strong> (actual Turquia) s'encunya la primera moneda: un tros de metall amb un valor fix garantit per l'Estat. És una <strong>abstracció nova</strong> —un valor universal darrere d'objectes molt diferents.",
+ link:"Diversos historiadors la relacionen amb l'hàbit mental de buscar un <em>principi únic</em> (arché) sota la diversitat de les coses: just el que faran els milesis."},
+
+// ---- s. VI aC ----
+{y:-585,date:"c. 585 aC",t:"thought",cat:"phi",name:"Escola de Milet",sub:"Tales · Anaximandre · Anaxímenes",ill:"cosmos",
+ lead:"Primers a buscar un <strong>principi (arché)</strong> natural i únic. <strong>Tales</strong>: l'aigua. <strong>Anaximandre</strong>: l'<em>àpeiron</em> (l'indefinit), primer mapa del món i una llei del canvi. <strong>Anaxímenes</strong>: l'aire, que per condensació i rarefacció ho genera tot —el primer <em>mecanisme</em> del canvi.",
+ link:"Neix a Milet, el port jònic més ric, cruïlla del comerç amb Egipte i Babilònia: la mentalitat tècnica i comercial fa natural preguntar de què està fet tot."},
+{y:-530,date:"c. 530 aC",t:"thought",cat:"phi",name:"Pitàgores",sub:"els pitagòrics · el nombre",
+ lead:"El principi del real no és una matèria sinó el <strong>nombre</strong>: la realitat és matematitzable (descobreixen que l'harmonia musical són proporcions). Alhora són una <strong>secta religiosa</strong> amb ànima immortal i transmigració.",
+ link:"Pont entre ciència i misticisme; la idea que el real és quantificable arribarà fins a Galileu i Kepler."},
+{y:-510,date:"c. 600–500 aC",t:"context",cat:"rel",name:"Cultes mistèrics i orfisme",sub:"salvació i ànima",
+ lead:"Al costat de la religió cívica es difonen els <strong>cultes mistèrics</strong> (Eleusis) i l'<strong>orfisme</strong>, que prometen salvació personal i ensenyen que l'<strong>ànima és immortal</strong> i es reencarna.",
+ link:"Aquesta idea de l'ànima passa als pitagòrics i, sobretot, a <strong>Plató</strong>: sense ella no s'entén el seu dualisme."},
+
+// ---- s. V aC: Atenes ----
+{y:-500,date:"c. 500 aC",t:"thought",cat:"phi",name:"Heràclit d'Efes",sub:"el devenir",ill:"river",
+ lead:"Tot flueix (<em>panta rhei</em>); un <strong>logos</strong> (llei oculta) regeix el canvi; la realitat és unitat de contraris en tensió. «No et banyes dos cops al mateix riu.»",
+ link:"Aporta que l'ordre pot ser <strong>dinàmic</strong>: l'oposat exacte de Parmènides."},
+{y:-490,date:"c. 490 aC",t:"thought",cat:"phi",name:"Parmènides",sub:"els eleates · Zenó",
+ lead:"L'<strong>ésser és u, etern i immòbil</strong>; el canvi és il·lusió dels sentits; només la raó arriba a la veritat. Zenó ho defensa amb les <em>aporias</em> (Aquil·les i la tortuga).",
+ link:"El xoc entre <strong>raó</strong> (Parmènides) i <strong>experiència</strong> (Heràclit) estructura tota la filosofia posterior."},
+{y:-485,date:"490 i 480–479 aC",t:"context",cat:"pol",name:"Les Guerres Mèdiques",sub:"Grècia contra Pèrsia",ill:"battle",
+ lead:"L'<strong>Imperi persa</strong> (aquemènida), l'estat més gran del moment, intenta conquerir Grècia. Els grecs el frenen a <strong>Marató</strong> (490) i, en una segona invasió, a <strong>Salamina</strong> (480) i <strong>Platea</strong> (479). Contra tot pronòstic, unes ciutats petites vencen un gran imperi.",
+ link:"La victòria dispara la confiança i el prestigi d'<strong>Atenes</strong>: d'aquí naixeran el seu imperi i la seva edat d'or."},
+{y:-478,date:"478 aC",t:"context",cat:"pol",name:"La Lliga de Delos",sub:"l'imperi atenès",ill:"athens",
+ lead:"Atenes lidera una aliança de ciutats per continuar la guerra contra Pèrsia, però la converteix de fet en un <strong>imperi marítim</strong>: cobra tribut als «aliats» i els controla.",
+ link:"El tribut i la plata de les mines financen el luxe cultural —la tragèdia, el Partenó— i la política democràtica."},
+{y:-460,date:"c. 460 aC",t:"thought",cat:"phi",name:"Els pluralistes",sub:"Empèdocles · Anaxàgoras",
+ lead:"El canvi és <strong>combinació</strong> d'elements eterns. Empèdocles: quatre arrels (terra, aigua, aire, foc) mogudes per Amor i Odi. Anaxàgoras: infinites llavors ordenades per una ment còsmica, el <strong>Nous</strong>.",
+ link:"Salven alhora Parmènides (res no neix del no-res) i Heràclit (hi ha canvi)."},
+{y:-450,date:"461–429 aC",t:"context",cat:"pol",name:"L'edat de Pèricles",sub:"democràcia radical",ill:"athens",
+ lead:"Sota el polític <strong>Pèricles</strong>, Atenes viu la seva edat d'or. <strong>Democràcia radical</strong>: l'assemblea de ciutadans decideix, els càrrecs es trien per sorteig i es paguen, hi ha tribunals populars. Es construeix el Partenó.",
+ link:"Quan el poder s'exerceix <em>convencent</em> l'assemblea, saber parlar bé es torna or: neix la demanda de <strong>sofistes</strong>."},
+{y:-445,date:"c. 445 aC",t:"thought",cat:"phi",name:"Els sofistes",sub:"Protàgores · Gòrgies · Trasímac",ill:"balance",
+ lead:"Mestres itinerants i de pagament que ensenyen <strong>retòrica</strong> i <em>areté</em>. Protàgores: «l'home és la mesura de totes les coses» (relativisme). Trasímac: «la justícia és l'interès del més fort». Introdueixen la distinció <strong>nomos</strong> (convenció) / <strong>physis</strong> (natura).",
+ link:"El debat nomos/physis neix del xoc entre la tradició i la nova mobilitat social d'una democràcia comercial."},
+{y:-440,date:"c. 440 aC",t:"thought",cat:"phi",name:"Els atomistes",sub:"Leucip · Demòcrit",ill:"atom",
+ lead:"La realitat són <strong>àtoms</strong> indivisibles movent-se en el <strong>buit</strong>; tot s'explica mecànicament, sense finalitat ni déus. El primer <strong>materialisme</strong> rigorós.",
+ link:"Anticipa el programa de la ciència moderna: explicar el complex per elements simples i lleis."},
+{y:-431,date:"431–404 aC",t:"context",cat:"pol",name:"La Guerra del Peloponès",sub:"Atenes contra Esparta",ill:"battle",
+ lead:"Atenes i <strong>Esparta</strong> s'enfronten en una llarga guerra. Una <strong>pesta</strong> devastadora mata Pèricles i un terç de la població d'Atenes (430). Al final, Atenes és <strong>derrotada</strong> (404).",
+ link:"El trauma de la derrota i la pesta és el rerefons moral del judici de Sòcrates."},
+{y:-430,date:"469–399 aC",t:"thought",cat:"phi",name:"Sòcrates",sub:"el gir antropològic",ill:"cup",
+ lead:"No escriu res (el coneixem per Plató i Xenofont). Contra el relativisme, busca <strong>definicions universals</strong> (què és la justícia? la valentia?). Mètode dialògic: ironia i <strong>maièutica</strong>. Tesi: la <strong>virtut és coneixement</strong>. Condemnat a mort el 399.",
+ link:"La seva condemna s'entén pel trauma de la postguerra: deixebles seus (els Trenta Tirans) havien traït la ciutat. És el primer gran símbol del conflicte entre <strong>filosofia i polis</strong>."},
+{y:-403,date:"404–403 aC",t:"context",cat:"pol",name:"Els Trenta Tirans",sub:"l'ombra del judici",
+ lead:"Esparta imposa a Atenes un govern de <strong>30 oligarques</strong> que fan una repressió sagnant abans que es restauri la democràcia (403).",
+ link:"Alguns dels Trenta havien estat propers a Sòcrates: això pesarà, pocs anys després, en la seva <strong>condemna</strong> (399)."},
+
+// ---- s. IV aC: síntesi clàssica ----
+{y:-420,date:"c. 420 aC",t:"context",cat:"sci",name:"La medicina hipocràtica",sub:"Hipòcrates de Cos",ill:"snake",
+ lead:"<strong>Hipòcrates</strong> funda la medicina racional: la malaltia té <strong>causes naturals</strong>, no és un càstig diví. Observa, registra símptomes i busca explicacions.",
+ link:"És el model de <strong>ciència empírica</strong> aplicada que acompanya el gir grec cap a explicacions naturals del món."},
+{y:-387,date:"427–347 aC",t:"thought",cat:"phi",name:"Plató",sub:"la teoria de les Idees",ill:"cave",
+ lead:"Marcat per la mort de Sòcrates, desdobla la realitat: el món sensible (aparença) i el món de les <strong>Formes</strong> (etern, veritable). <strong>Al·legoria de la caverna</strong>; conèixer és <em>recordar</em>; la ciutat justa la governen els filòsofs. Funda l'<strong>Acadèmia</strong> (c. 387).",
+ link:"La crisi de la polis l'empeny a buscar un ordre estable —ontològic i polític— contra el relativisme que, al seu parer, havia matat Sòcrates."},
+{y:-350,date:"384–322 aC",t:"thought",cat:"phi",name:"Aristòtil",sub:"el saber sistemàtic",ill:"cosmos",
+ lead:"L'universal és <strong>dins</strong> les coses (hilemorfisme); canvi per acte/potència i les <strong>quatre causes</strong>. Funda la <strong>lògica</strong>. Ètica del terme mitjà; l'home com a <em>zoon politikon</em>. Cosmos finit i <strong>geocèntric</strong>. Funda el <strong>Liceu</strong> (335).",
+ link:"Preceptor d'Alexandre, és la frontissa cap a l'hel·lenisme. El seu cosmos geocèntric dominarà fins al s. XVII."},
+{y:-345,date:"s. IV aC",t:"context",cat:"sci",name:"La física d'Aristòtil",sub:"el moviment i els «llocs naturals»",ill:"cosmos",
+ lead:"Aristòtil també funda una <strong>física</strong>: cada cos tendeix al seu «<strong>lloc natural</strong>» (la pedra avall, el foc amunt), els greus cauen més de pressa que els lleugers i el <strong>buit és impossible</strong>. El món sublunar (els 4 elements) és el del canvi; el celeste, fet d'<strong>èter</strong>, gira etern en cercles perfectes.",
+ link:"Una física <strong>qualitativa i finalista</strong> que dominarà 2000 anys; Galileu (la caiguda dels cossos) i Newton (la inèrcia) la <strong>demoliran</strong> al segle XVII."},
+{y:-360,date:"s. IV aC",t:"thought",cat:"phi",name:"El cinisme",sub:"Diògenes de Sínope",
+ lead:"Rebuig radical de les convencions, <strong>autosuficiència</strong> i vida «segons la natura» portada a l'extrem provocador.",
+ link:"Primera reacció antiinstitucional davant la pèrdua del sentit cívic de la polis."},
+{y:-338,date:"338 aC",t:"context",cat:"pol",name:"Queronea",sub:"Macedònia sotmet Grècia",ill:"helm",
+ lead:"<strong>Filip II de Macedònia</strong>, un regne del nord, derrota les ciutats gregues a la batalla de <strong>Queronea</strong> i posa fi a la seva independència.",
+ link:"S'acaba el món de la polis lliure: la filosofia buscarà un nou ordre (Plató) o haurà d'ordenar tot el saber (Aristòtil)."},
+
+// ---- hel·lenisme ----
+{y:-330,date:"336–323 aC",t:"context",cat:"pol",name:"Alexandre el Gran",sub:"un món nou",ill:"globe",
+ lead:"<strong>Alexandre</strong>, deixeble d'Aristòtil, conquereix l'Imperi persa i arriba fins a l'Índia en deu anys. Crea un món enorme i barrejat, l'<strong>hel·lenístic</strong>, amb una llengua comuna (la <em>koiné</em>).",
+ link:"L'individu passa a ser súbdit anònim de monarquies immenses: la filosofia es torna recerca de <strong>felicitat personal</strong>."},
+{y:-320,date:"s. IV–III aC",t:"thought",cat:"phi",name:"L'escepticisme",sub:"Pirró",
+ lead:"Com no podem conèixer la veritat, cal <strong>suspendre el judici</strong> (<em>epokhé</em>); d'aquesta suspensió en brolla la tranquil·litat.",
+ link:"La inseguretat de l'època es respon renunciant a la certesa per guanyar serenor."},
+{y:-307,date:"341–270 aC",t:"thought",cat:"phi",name:"L'epicureisme",sub:"Epicur i el Jardí",ill:"garden",
+ lead:"Física <strong>atomista</strong> (amb el <em>clinamen</em>, que salva la llibertat). La meta és el <strong>plaer</strong> com a <em>ataràxia</em> (serenor) i absència de dolor. «La mort no és res per a nosaltres.»",
+ link:"Recepta de felicitat privada per a qui ja no espera res de la vida pública."},
+{y:-301,date:"323–281 aC",t:"context",cat:"pol",name:"Els regnes hel·lenístics",sub:"els diàdocs",
+ lead:"En morir Alexandre sense hereu, els seus generals (els <strong>diàdocs</strong>) es reparteixen l'imperi en grans regnes: el <strong>Ptolemaic</strong> (Egipte), el <strong>Selèucida</strong> (Àsia) i el de Macedònia.",
+ link:"Aquests reis rics seran els <strong>mecenes</strong> que finançaran la gran ciència d'Alexandria."},
+{y:-300,date:"333–262 aC",t:"thought",cat:"phi",name:"L'estoïcisme",sub:"Zenó de Cítion",ill:"laurel",
+ lead:"L'univers és regit per un <strong>logos providencial</strong>; cal viure conforme a la natura i distingir <strong>el que depèn de nosaltres</strong> (el judici) del que no. <strong>Cosmopolitisme</strong>: tots som ciutadans del món.",
+ link:"Teràpia de l'ànima quan no es pot canviar la política; el seu cosmopolitisme prepararà l'universalisme romà i cristià."},
+{y:-295,date:"c. 295 aC",t:"context",cat:"sci",name:"El Museu i la Biblioteca",sub:"Alexandria",ill:"globe",
+ lead:"Els reis <strong>Ptolemeus</strong> funden a Alexandria la primera gran <strong>institució de recerca finançada per l'Estat</strong>: sous, col·leccions i treball en equip. S'hi vol reunir tot el saber del món.",
+ link:"El mecenatge reial <strong>professionalitza la ciència</strong> i la separa de l'especulació filosòfica: comença la gran ciència hel·lenística."},
+{y:-290,date:"c. 300 aC",t:"context",cat:"sci",name:"Euclides",sub:"els Elements",
+ lead:"<strong>Euclides</strong> organitza tota la geometria a partir d'uns pocs <strong>axiomes</strong> i demostracions encadenades.",
+ link:"Serà el model de <strong>raonament rigorós</strong> (axiomàtic-deductiu) durant més de dos mil anys."},
+{y:-280,date:"c. 280 aC",t:"context",cat:"sci",name:"Aristarc de Samos",sub:"l'heliocentrisme oblidat",ill:"cosmos",
+ lead:"<strong>Aristarc</strong> proposa que la Terra gira al voltant del <strong>Sol</strong>: el primer model <strong>heliocèntric</strong>, divuit segles abans de Copèrnic. Gairebé ningú no l'accepta.",
+ link:"Demostra que la <strong>millor hipòtesi no sempre guanya</strong>: s'imposarà el geocentrisme fins al segle XVII."},
+{y:-250,date:"c. 250 aC",t:"context",cat:"sci",name:"Arquimedes",sub:"física i enginyeria",
+ lead:"<strong>Arquimedes de Siracusa</strong> funda l'estàtica i la hidrostàtica, formula la llei de la <strong>palanca</strong>, aproxima el nombre π i dissenya màquines.",
+ link:"Cim de la física antiga; però sense un teixit industrial que l'absorbeixi, queda com a saber d'elit."},
+{y:-240,date:"c. 240 aC",t:"context",cat:"sci",name:"Eratòstenes",sub:"mesura la Terra",ill:"globe",
+ lead:"<strong>Eratòstenes</strong>, bibliotecari d'Alexandria, <strong>mesura la circumferència de la Terra</strong> amb un error inferior al 2%, usant només geometria i l'ombra del sol a dues ciutats.",
+ link:"Mostra fins on arriba la ciència grega amb mètode i institucions: una fita que no es repetirà fins a l'Edat Moderna."},
+{y:-130,date:"c. 150–120 aC",t:"context",cat:"sci",name:"Hiparc",sub:"astronomia de precisió",
+ lead:"<strong>Hiparc</strong> elabora el primer <strong>catàleg d'estrelles</strong>, descobreix la precessió dels equinoccis i posa les bases de la trigonometria.",
+ link:"Les seves dades alimentaran, tres segles després, el sistema geocèntric de Ptolemeu."},
+
+// ---- Roma ----
+{y:-146,date:"264–146 aC",t:"context",cat:"pol",name:"Roma conquereix Grècia",sub:"de ciutat a imperi",ill:"arch",
+ lead:"<strong>Roma</strong>, una república italiana, conquereix la Mediterrània i sotmet Grècia (146 aC). Però <strong>adopta la cultura grega</strong>: «Grècia conquerida va conquerir el seu fer vencedor».",
+ link:"Roma serà més receptora que innovadora, però <strong>fixarà el vocabulari</strong> filosòfic d'Occident (persona, llei, dret natural)."},
+{y:-52,date:"106–43 aC",t:"thought",cat:"phi",name:"Ciceró i Lucreci",sub:"la filosofia en llatí",ill:"scroll",
+ lead:"<strong>Ciceró</strong> tradueix al llatí els conceptes grecs i formula una idea de <strong>dret natural</strong>. <strong>Lucreci</strong>, a <em>De rerum natura</em>, exposa l'epicureisme en vers: un materialisme que vol alliberar de la por.",
+ link:"Sense aquest pont llatí, bona part del pensament grec no hauria arribat a l'Europa posterior."},
+{y:-27,date:"27 aC",t:"context",cat:"pol",name:"August i la Pax Romana",sub:"neix l'Imperi",ill:"laurel",
+ lead:"Després de dècades de <strong>guerres civils</strong>, August esdevé el primer emperador (27 aC) i inaugura dos segles de pau i prosperitat: la <strong>Pax Romana</strong>.",
+ link:"L'estabilitat imperial afavoreix una filosofia pràctica de l'<strong>autodomini</strong>: l'estoïcisme romà."},
+{y:50,date:"s. I dC",t:"context",cat:"rel",name:"La difusió del cristianisme",sub:"un missatge nou",
+ lead:"Al segle I neix i es difon el <strong>cristianisme</strong>: un missatge <strong>igualitari</strong> (esclaus, pobres i dones tenen ànima i salvació), comunitats solidàries i la promesa de vida eterna.",
+ link:"En una època que aviat entrarà en crisi, aquesta promesa de sentit creix imparable dins l'Imperi."},
+{y:150,date:"s. I–II dC",t:"thought",cat:"phi",name:"L'estoïcisme romà",sub:"Sèneca · Epictet · Marc Aureli",ill:"laurel",
+ lead:"L'estoïcisme esdevé l'<strong>ètica pràctica</strong> de Roma. L'abracen <strong>Sèneca</strong> (conseller ric), <strong>Epictet</strong> (esclau llibert) i <strong>Marc Aureli</strong> (emperador): només som amos del nostre <em>judici</em>.",
+ link:"Un esclau i un emperador amb la mateixa doctrina: el <strong>cosmopolitisme</strong> estoic prepara l'universalisme cristià."},
+{y:150,date:"c. 150 dC",t:"context",cat:"sci",name:"Ptolemeu",sub:"l'Almagest geocèntric",ill:"cosmos",
+ lead:"<strong>Claudi Ptolemeu</strong> escriu l'<em>Almagest</em>: un model matemàtic del cel amb la <strong>Terra al centre</strong>. Funciona prou bé per predir i dominarà l'astronomia 1400 anys.",
+ link:"El geocentrisme d'Aristòtil i Ptolemeu serà «el món» que la Revolució Científica haurà de <strong>derrocar</strong> al segle XVII."},
+
+// ---- Antiguitat tardana ----
+{y:255,date:"204–270 dC",t:"thought",cat:"phi",name:"El neoplatonisme",sub:"Plotí · Enèades",
+ lead:"L'última gran síntesi pagana, de to místic: d'un principi absolut, l'<strong>U</strong>, emanen per graus l'Intel·lecte i l'Ànima i el món; la vida filosòfica és el <strong>retorn</strong> de l'ànima al seu origen.",
+ link:"La seva jerarquia espiritual serà absorbida gairebé sencera per la <strong>teologia cristiana</strong> (Agustí)."},
+{y:270,date:"235–284 dC",t:"context",cat:"pol",name:"La crisi del segle III",sub:"l'Imperi gairebé s'enfonsa",
+ lead:"En cinquanta anys, l'Imperi té <strong>desenes d'emperadors</strong> imposats i assassinats per l'exèrcit, <strong>inflació</strong> brutal, epidèmies i invasions per totes les fronteres (germànics i el nou Imperi <strong>sassànida</strong>).",
+ link:"Una crisi total de seguretat i de <strong>sentit</strong> prepara l'èxit definitiu d'una religió de salvació: el cristianisme."},
+{y:290,date:"284–305 dC",t:"context",cat:"pol",name:"Dioclecià",sub:"la tetrarquia",
+ lead:"<strong>Dioclecià</strong> salva l'Imperi reorganitzant-lo de dalt a baix (la <strong>tetrarquia</strong>: quatre emperadors) i controlant l'economia. També fa l'última gran <strong>persecució</strong> dels cristians.",
+ link:"L'Imperi se centralitza i es militaritza: el marc on, poc després, el cristianisme passarà de perseguit a oficial."},
+{y:313,date:"313 dC",t:"context",cat:"rel",name:"Edicte de Milà",sub:"Constantí legalitza el cristianisme",ill:"cross",
+ lead:"<strong>Constantí</strong> <strong>legalitza el cristianisme</strong> i acaba amb les persecucions. Busca un déu únic que <strong>cohesioni</strong> un imperi trencat. El 330 funda una nova capital a l'est: Constantinoble.",
+ link:"L'Estat i l'Església comencen a anar de bracet: el poder polític necessita la nova fe i la nova fe, la protecció del poder."},
+{y:325,date:"325 dC",t:"context",cat:"rel",name:"Concili de Nicea",sub:"l'ortodòxia, afer d'Estat",ill:"cross",
+ lead:"Convocat pel mateix Constantí, el <strong>Concili de Nicea</strong> defineix l'ortodòxia (la divinitat plena de Crist) contra l'heretgia arriana.",
+ link:"La <strong>unitat de la fe</strong> es torna assumpte d'Estat: pensar diferent passarà a ser un problema polític."},
+{y:380,date:"380 dC",t:"context",cat:"rel",name:"Edicte de Tessalònica",sub:"religió oficial i única",ill:"cross",
+ lead:"<strong>Teodosi</strong> fa del cristianisme la <strong>religió oficial i única</strong> de l'Imperi. Pocs anys després (391–392) es <strong>prohibeix el culte pagà</strong>.",
+ link:"«Un imperi, una fe, un emperador.» Aquí es tanca de fet la possibilitat d'una <strong>filosofia pagana lliure</strong>."},
+{y:378,date:"378 dC",t:"context",cat:"pol",name:"Adrianòpolis",sub:"els bàrbars vencen Roma",ill:"battle",
+ lead:"A <strong>Adrianòpolis</strong>, els <strong>gots</strong> (un poble germànic que fugia dels huns) derroten i maten l'emperador en camp obert. Per primer cop un poble «bàrbar» venç l'exèrcit imperial.",
+ link:"S'inicia el degoteig d'invasions que acabarà amb l'Imperi d'Occident."},
+{y:395,date:"395 dC",t:"context",cat:"pol",name:"La divisió de l'Imperi",sub:"Orient i Occident",
+ lead:"A la mort de Teodosi, l'Imperi es divideix <strong>definitivament</strong>: Occident (pobre i vulnerable) i Orient (ric, que sobreviurà mil anys com a <strong>Bizanci</strong>).",
+ link:"Occident, sol i feble, queda exposat a les invasions que el faran caure."},
+{y:410,date:"410 dC",t:"context",cat:"pol",name:"Alaric saqueja Roma",sub:"els visigots",ill:"arch",
+ lead:"<strong>Alaric</strong>, rei dels <strong>visigots</strong>, entra a Roma i la saqueja durant tres dies. Feia 800 anys que cap enemic no trepitjava la ciutat: el xoc és <strong>enorme</strong> a tot el món romà.",
+ link:"Molts pagans culpen els cristians d'haver abandonat els déus antics. Per respondre, <strong>Agustí</strong> escriurà <em>La ciutat de Déu</em>."},
+{y:455,date:"455 dC",t:"context",cat:"pol",name:"Els vàndals saquegen Roma",sub:"el segon cop",
+ lead:"Els <strong>vàndals</strong>, un altre poble germànic vingut del nord d'Àfrica, saquegen Roma una segona vegada, encara més a fons.",
+ link:"L'autoritat imperial a Occident ja és gairebé fictícia: la caiguda és qüestió de temps."},
+{y:476,date:"476 dC",t:"context",cat:"pol",name:"La caiguda de Roma",sub:"Odoacre deposa Ròmul Augústul",ill:"arch",
+ lead:"El cabdill germànic <strong>Odoacre</strong> deposa l'últim emperador d'Occident, un nen anomenat <strong>Ròmul Augústul</strong>. És la data convencional de la fi de l'Imperi romà d'Occident.",
+ link:"No cau per una sola causa, sinó per la suma de pressió militar, crisi econòmica, inestabilitat i divisió. A Occident només l'<strong>Església</strong> queda dempeus."},
+{y:520,date:"480–524 dC",t:"thought",cat:"phi",name:"Boeci",sub:"«l'últim romà»",ill:"scroll",
+ lead:"<strong>Boeci</strong> salva la <strong>lògica d'Aristòtil</strong> traduint-la al llatí i, empresonat, escriu <em>La consolació de la filosofia</em>.",
+ link:"És el <strong>pont</strong> pel qual la lògica antiga entra al món medieval llatí (l'única part d'Aristòtil coneguda fins al s. XII)."},
+{y:529,date:"529 dC",t:"context",cat:"rel",name:"Es tanca l'Acadèmia d'Atenes",sub:"el final del món antic",ill:"book",
+ lead:"L'emperador <strong>Justinià</strong> clausura l'<strong>Acadèmia d'Atenes</strong>, l'escola fundada per Plató 900 anys abans. El mateix any, <strong>Benet de Núrsia</strong> funda el monestir de Montecassino.",
+ link:"El saber pagà s'apaga just quan el <strong>monestir cristià</strong> comença a custodiar-lo. La filosofia esdevé <em>ancilla theologiae</em>: comença l'Edat Mitjana."}
+],
+    subs: [
+ {name:"Cosmològic · els físics",y0:-610,y1:-450,c:"#2f9fd0",cent:"s. VI–V aC",
+  focus:"La <em>physis</em> i el cosmos; la recerca de l'<strong>arché</strong>, el principi i fonament de tot el real.",
+  q:"De què està fet el món i per què canvia?",
+  cause:"La Jònia comercial i oberta, l'alfabet, la moneda i els sabers d'Orient fan possible passar del mite a l'explicació natural."},
+ {name:"Antropològic",y0:-450,y1:-399,c:"#e08a3c",cent:"s. V aC",
+  focus:"El gir cap a l'<strong>home</strong>: el coneixement, el llenguatge, la moral i la societat.",
+  q:"Què és l'home? Què és el bé i la justícia? (debat <em>nomos/physis</em>)",
+  cause:"La democràcia atenenca premia la persuasió i crea la demanda de sofistes; Sòcrates hi reacciona buscant definicions universals."},
+ {name:"Grans sistemes",y0:-399,y1:-322,c:"#d6b24a",cent:"s. IV aC",
+  focus:"Grans síntesis que integren cosmos, home, coneixement, ètica i política; neix l'<strong>ontologia</strong> i la reflexió sobre el mètode.",
+  q:"Quina és l'estructura última de la realitat i del bé?",
+  cause:"La crisi de la polis i l'ascens de Macedònia empenyen a buscar un ordre estable (Plató i Aristòtil)."},
+ {name:"Hel·lenístic",y0:-322,y1:-30,c:"#5fb87a",cent:"s. IV–I aC",
+  focus:"L'<strong>ètica individual</strong> i la felicitat: viure bé i sense pertorbació (<em>ataràxia</em>, <em>autàrkeia</em>); cosmopolitisme. Filosofia com a teràpia de l'ànima.",
+  q:"Com he de viure quan no controlo el meu entorn?",
+  cause:"Alexandre i els grans regnes: l'individu esdevé súbdit anònim d'imperis immensos i perd la polis com a marc de vida."},
+ {name:"Romà i tardà",y0:-30,y1:529,c:"#9d7bd8",cent:"s. I aC – VI dC",
+  focus:"Roma divulga i fa pràctica l'ètica grega (estoïcisme romà, dret natural); després el <strong>neoplatonisme</strong> fa un gir místic i transcendent (l'U, el retorn de l'ànima).",
+  q:"Com viure amb deure i autodomini? I com torna l'ànima al seu origen?",
+  cause:"L'Imperi i la Pax Romana, la crisi del segle III i l'auge imparable del cristianisme."}
+],
+    traits: [
+ ["Cosmocentrisme","La realitat de referència és el <strong>cosmos</strong>: una totalitat ordenada, harmònica i eterna. La natura (<em>physis</em>) és el centre i el model de tot ordre, també el moral i el polític."],
+ ["Autonomia de la raó","El <em>logos</em> humà basta per conèixer la realitat: s'expliquen els fenòmens per causes naturals i amb arguments, no per revelació ni per autoritat sagrada."],
+ ["L'ésser humà, animal racional","El que defineix l'home és la <strong>raó</strong>; és una part del cosmos ordenat i ha de viure d'acord amb aquest ordre. Distinció ànima/cos (dualisme a Plató, hilemorfisme a Aristòtil)."],
+ ["L'home, animal polític","La realització humana es dona en la <strong>vida en comú</strong>, a la polis: ètica i política són inseparables."],
+ ["Eudaimonisme","El fi de la vida és la <strong>felicitat</strong> (<em>eudaimonia</em>), assolible en aquesta vida mitjançant la virtut i la raó."],
+ ["Filosofia com a manera de viure","Fer filosofia és triar una escola i adoptar-ne la forma de vida, amb exercicis espirituals: una <strong>teràpia de l'ànima</strong> (Hadot)."],
+ ["Temps cíclic i cosmos etern","El món no té un començament absolut ni una fi cap a la qual camini; l'ordre és etern i sovint cíclic."]
+]
+  },
+  medieval: {
+    brand: 'Filosofia medieval',
+    ymin: 360, ymax: 1520, ppy: 6,
+    cyStart: 400, cyEnd: 1500,
+    char: { h: 'La filosofia medieval', c: '#e7c66a', intro: `Trets de fons que comparteixen els pensadors de l'Edat Mitjana —cristians, jueus i musulmans—, més enllà de les seves diferències.` },
+    items: [
+// ---- Patrística ----
+{y:400,date:"354–430 dC",t:"thought",cat:"phi",name:"Agustí d'Hipona",sub:"la gran frontissa",ill:"book",
+ lead:"Fon el <strong>neoplatonisme</strong> amb el cristianisme. Gira cap a la <strong>interioritat</strong> («no surtis a fora, torna a tu mateix»), entén el mal com a privació de bé i debat <strong>gràcia i lliure albir</strong>. Lema: «crec per entendre, entenc per creure».",
+ link:"Després del saqueig de Roma (410) escriu <em>La ciutat de Déu</em> i dona al cristianisme la seva primera gran arquitectura filosòfica: fixa l'agenda del pensament fins al segle XIII."},
+{y:430,date:"s. II–V dC",t:"context",cat:"rel",name:"Els Pares de l'Església",sub:"patrística",ill:"cross",
+ lead:"Pensadors cristians (Justí, Orígenes, Ambròs, Jeroni, Agustí) que <strong>defensen i expliquen la fe</strong> amb les eines de la filosofia grega, sobretot el platonisme i el neoplatonisme.",
+ link:"Construeixen la <strong>filosofia cristiana</strong>: tradueixen els dogmes a conceptes filosòfics i fixen la relació entre fe i raó."},
+{y:529,date:"529 dC",t:"context",cat:"rel",name:"El monaquisme benedictí",sub:"«ora et labora»",ill:"book",
+ lead:"<strong>Benet de Núrsia</strong> funda Montecassino i la seva regla. Els monestirs esdevenen illes d'ordre en una Europa en ruïnes, i els monjos <strong>copien i conserven</strong> els manuscrits antics.",
+ link:"Sense aquesta tasca silenciosa de còpia, bona part del saber clàssic s'hauria perdut: el monestir és el dipòsit de la cultura."},
+{y:600,date:"c. 500–630 dC",t:"context",cat:"sci",name:"La salvaguarda del saber",sub:"Boeci · Isidor de Sevilla",ill:"scroll",
+ lead:"<strong>Boeci</strong> tradueix part de la lògica d'Aristòtil al llatí (l'única que es coneixerà fins al s. XII). <strong>Isidor de Sevilla</strong> escriu les <em>Etimologies</em>, una enciclopèdia que resumeix tot el saber antic.",
+ link:"Durant segles, Occident pensarà amb aquestes engrunes salvades del naufragi del món antic."},
+// ---- Islam ----
+{y:622,date:"622 dC",t:"context",cat:"rel",name:"Naixement de l'islam",sub:"Mahoma · l'Hègira",
+ lead:"<strong>Mahoma</strong> predica un monoteisme estricte; l'any de l'Hègira (622) obre el calendari musulmà. En pocs decennis l'islam unifica Aràbia.",
+ link:"La nova civilització islàmica, urbana i oberta, recollirà i ampliarà el saber grec just quan Occident amb prou feines sobreviu."},
+{y:700,date:"632–732 dC",t:"context",cat:"pol",name:"Les conquestes àrabs",sub:"al-Àndalus",ill:"battle",
+ lead:"En un segle, els àrabs conquereixen des de Pèrsia fins a Hispània (<strong>711</strong>, al-Àndalus). El 732, Carles Martell els atura a Poitiers.",
+ link:"A al-Àndalus (Còrdova, Toledo) conviuen musulmans, jueus i cristians: serà el pont per on el saber grec, en àrab, tornarà a Europa."},
+{y:830,date:"c. 750–900 dC",t:"context",cat:"sci",name:"La Casa de la Saviesa",sub:"Bagdad · edat d'or islàmica",ill:"cosmos",
+ lead:"Sota els abbàssides, Bagdad tradueix i amplia la ciència grega, persa i índia. <strong>Al-Khwarizmí</strong> funda l'<strong>àlgebra</strong> (c. 820) —d'ell ve «algorisme»— i s'adopta la numeració índia amb el <strong>zero</strong>.",
+ link:"Mentre Occident sobreviu amb prou feines, el saber floreix en àrab: és l'època que conserva Aristòtil per a tothom."},
+{y:910,date:"870–950 dC",t:"thought",cat:"phi",name:"Al-Farabí",sub:"«el segon mestre»",
+ lead:"Anomenat «el segon mestre» (després d'Aristòtil), uneix la <strong>lògica aristotèlica</strong> i el neoplatonisme i dissenya una <strong>ciutat ideal</strong> governada pel savi.",
+ link:"Obre la gran filosofia islàmica que comentarà i transmetrà Aristòtil a tot el Mediterrani."},
+{y:1010,date:"980–1037 dC",t:"thought",cat:"phi",name:"Avicenna",sub:"Ibn Sina",
+ lead:"Sistematitza la filosofia: distingeix <strong>essència i existència</strong> i demostra un <strong>Ésser necessari</strong> (Déu) del qual emana la resta. També és un metge de referència.",
+ link:"La seva metafísica entra a Europa amb les traduccions i marcarà Aquino i tota l'escolàstica."},
+{y:1090,date:"1058–1111 dC",t:"thought",cat:"phi",name:"Al-Ghazali",sub:"la crítica als filòsofs",
+ lead:"A <em>La incoherència dels filòsofs</em> sosté que la raó pura no pot demostrar dogmes com la creació o la immortalitat, i reivindica la fe i l'experiència mística (sufisme).",
+ link:"Planteja, segles abans que Occident, el problema dels <strong>límits de la raó</strong> davant la fe."},
+{y:1170,date:"1126–1198 dC",t:"thought",cat:"phi",name:"Averroes",sub:"Ibn Rushd · «el Comentador»",
+ lead:"El gran <strong>comentarista d'Aristòtil</strong>. Defensa que filosofia i religió diuen la mateixa veritat per vies diferents i que cal cultivar la raó sense por.",
+ link:"A Europa el llegeixen tant que en diuen «el Comentador»; en sorgeix l'<strong>averroisme llatí</strong>, que esverarà l'Església."},
+{y:1190,date:"1138–1204 dC",t:"thought",cat:"phi",name:"Maimònides",sub:"filosofia jueva",ill:"book",
+ lead:"Jueu de Còrdova; a la <em>Guia de perplexos</em> mira de <strong>conciliar Aristòtil amb la Torà</strong> per als creients que dubten, amb molta prudència sobre què podem dir de Déu.",
+ link:"Mostra que el problema fe-raó és comú a les tres religions del Llibre; influeix directament Tomàs d'Aquino."},
+// ---- Alta edat mitjana cristiana ----
+{y:800,date:"800 dC",t:"context",cat:"pol",name:"Carlemany",sub:"Imperi carolingi",ill:"laurel",
+ lead:"<strong>Carlemany</strong> és coronat emperador (800) i unifica bona part d'Europa. Impulsa una <strong>renaixença cultural</strong> i crea escoles a abadies i catedrals (decret del 787).",
+ link:"D'aquestes escoles («scholae») naixeran, segles després, l'escolàstica i les universitats."},
+{y:860,date:"c. 810–877 dC",t:"thought",cat:"phi",name:"Escot Eriúgena",sub:"el neoplatònic carolingi",
+ lead:"A la cort carolíngia, l'irlandès Eriúgena reprèn el <strong>neoplatonisme</strong>: a <em>De divisione naturae</em> pensa Déu i el món com a graus d'una mateixa realitat que surt de Déu i hi torna.",
+ link:"Pensament audaç i aïllat: una espurna de filosofia en uns segles dominats per la simple conservació."},
+{y:1054,date:"1054 dC",t:"context",cat:"rel",name:"El Cisma d'Orient",sub:"catòlics i ortodoxos",ill:"cross",
+ lead:"L'Església es trenca en dues: la <strong>catòlica</strong> (Roma, llatina) i l'<strong>ortodoxa</strong> (Constantinoble, grega), per disputes de doctrina i de poder.",
+ link:"Occident llatí queda definit com un àmbit cultural propi: és el marc on creixerà l'escolàstica."},
+{y:1080,date:"1033–1109 dC",t:"thought",cat:"phi",name:"Anselm de Canterbury",sub:"«pare de l'escolàstica»",
+ lead:"Formula l'<strong>argument ontològic</strong>: si Déu és «allò més gran que es pot pensar», ha d'existir, perquè existir és més perfecte que no existir. Lema: <strong>«la fe que busca entendre»</strong>.",
+ link:"Inaugura l'esforç escolàstic de <strong>demostrar racionalment</strong> les veritats de la fe."},
+{y:1100,date:"1075–1122 dC",t:"context",cat:"pol",name:"La querella de les investidures",sub:"papa contra emperador",
+ lead:"Papat i Imperi lluiten per qui nomena els bisbes —és a dir, per <strong>qui mana</strong>. Acaba en taules amb el Concordat de Worms (1122).",
+ link:"El gran tema medieval del poder: l'autoritat espiritual i la temporal es disputen el món, i la filosofia política hi reflexiona."},
+{y:1095,date:"1095 dC",t:"context",cat:"rel",name:"Les Croades",sub:"Urbà II",ill:"cross",
+ lead:"El papa <strong>Urbà II</strong> crida a recuperar Terra Santa; durant dos segles, onades de croats marxen a Orient.",
+ link:"Més enllà de la guerra, multipliquen el <strong>contacte amb el món islàmic</strong> i el flux de llibres i idees cap a Europa."},
+// ---- Escolàstica: ciència i institucions ----
+{y:1020,date:"c. 1020 dC",t:"context",cat:"sci",name:"Alhazen i l'òptica",sub:"Ibn al-Haytham",
+ lead:"Al Caire, <strong>Alhazen</strong> escriu el <em>Llibre de l'òptica</em>: demostra amb <strong>experiments</strong> que la llum entra a l'ull (no a l'inrevés, com creien els grecs).",
+ link:"El seu mètode experimental, traduït al llatí, és un dels gèrmens de la futura ciència moderna."},
+{y:1150,date:"1085–1187 dC",t:"context",cat:"sci",name:"L'Escola de Toledo",sub:"les grans traduccions",ill:"scroll",
+ lead:"Reconquerida Toledo (1085), s'hi tradueixen de l'<strong>àrab al llatí</strong> Aristòtil sencer, Ptolemeu (l'<em>Almagest</em>, 1175), Euclides, Avicenna i Averroes.",
+ link:"Europa <strong>recupera Aristòtil</strong> i el cosmos geocèntric de Ptolemeu, que es <strong>cristianitzen</strong> i seran la imatge oficial del món fins al s. XVII; és l'espurna que encén l'apogeu escolàstic."},
+{y:1190,date:"c. 1088–1200 dC",t:"context",cat:"sci",name:"Neixen les universitats",sub:"Bolonya · París · Oxford",ill:"book",
+ lead:"De les escoles catedralícies sorgeixen les <strong>universitats</strong> (Bolonya, París, Oxford): corporacions de mestres i estudiants amb estatuts propis. La filosofia es fa a les «escoles» —d'aquí <strong>escolàstica</strong>.",
+ link:"Per primer cop d'ençà d'Alexandria hi ha institucions estables de saber, i la disputa (<em>disputatio</em>) n'és el motor."},
+{y:1215,date:"1209 · 1216 dC",t:"context",cat:"rel",name:"Els ordes mendicants",sub:"franciscans i dominicans",
+ lead:"Neixen els <strong>franciscans</strong> (1209) i els <strong>dominicans</strong> (1216): ordes de pobresa i predicació que ocupen les càtedres universitàries.",
+ link:"Quasi tots els grans escolàstics en surten: dominicans (Albert, Aquino) oberts a Aristòtil; franciscans (Bonaventura, Escot, Occam) més agustinians."},
+{y:1202,date:"1202 dC",t:"context",cat:"sci",name:"Fibonacci i les xifres",sub:"Liber Abaci",ill:"coin",
+ lead:"<strong>Fibonacci</strong> divulga a Europa les <strong>xifres aràbigues</strong> i el zero amb el <em>Liber Abaci</em>, molt més pràctiques que els nombres romans per al comerç i el càlcul.",
+ link:"Una eina mental nova que, amb el temps, farà possible la matematització del món."},
+{y:1255,date:"1221–1274 dC",t:"thought",cat:"phi",name:"Bonaventura",sub:"la via franciscana",
+ lead:"Franciscà i agustinià: per a ell la raó només arriba a la veritat <strong>il·luminada per la fe</strong>, i tot el saber s'ordena cap a Déu. Desconfia d'un Aristòtil massa autònom.",
+ link:"Encarna l'ala que resisteix la confiança total en Aristòtil: el debat intern de l'escolàstica."},
+{y:1265,date:"1225–1274 dC",t:"thought",cat:"phi",name:"Tomàs d'Aquino",sub:"la gran síntesi",ill:"cross",
+ lead:"A la <em>Summa Theologiae</em> integra <strong>Aristòtil i el cristianisme</strong>: fe i raó són distintes però no es contradiuen (totes dues venen de Déu). Demostra Déu per <strong>cinc vies</strong> i aplica l'hilemorfisme a l'ànima.",
+ link:"L'<strong>equilibri</strong> entre fe i raó arriba al cim; el tomisme serà la filosofia oficial del catolicisme."},
+{y:1270,date:"c. 1265–1277 dC",t:"context",cat:"rel",name:"L'averroisme i la condemna de 1277",sub:"els límits del pensable",
+ lead:"Alguns mestres de París (averroistes, com Siger de Brabant) defensen tesis d'Aristòtil que xoquen amb la fe. El bisbe Tempier <strong>condemna 219 proposicions</strong> (1277).",
+ link:"L'Església marca fins on pot arribar la raó: el xoc afebleix la gran síntesi i obre el recel envers Aristòtil."},
+// ---- Baixa edat mitjana: crisi ----
+{y:1300,date:"1266–1308 dC",t:"thought",cat:"phi",name:"Joan Duns Escot",sub:"«el doctor subtil»",
+ lead:"Introdueix distincions fines: la <strong>univocitat de l'ésser</strong> (la paraula «ésser» val igual per a Déu i per a les criatures) i la <strong>primacia de la voluntat</strong> i de la llibertat divina.",
+ link:"Comença a separar el que abans estava unit: el terreny i el diví ja no s'expliquen amb el mateix llenguatge."},
+{y:1330,date:"1287–1347 dC",t:"thought",cat:"phi",name:"Guillem d'Occam",sub:"nominalisme · la navalla",
+ lead:"Nega que els <strong>universals</strong> existeixin: només hi ha individus, i els conceptes són noms (<strong>nominalisme</strong>). La <strong>navalla d'Occam</strong>: no multipliquis els ens sense necessitat.",
+ link:"<strong>Separa la fe de la raó</strong>: la teologia no es pot demostrar. Es trenca la síntesi tomista i s'allibera l'estudi de la natura."},
+{y:1350,date:"c. 1320–1382 dC",t:"context",cat:"sci",name:"La ciència del moviment",sub:"Buridan · Oresme · Oxford",ill:"atom",
+ lead:"A París i Oxford, <strong>Buridan</strong> (teoria de l'<em>ímpetus</em>) i <strong>Oresme</strong> estudien el moviment amb matemàtiques (teorema de la velocitat mitjana) i gosen <strong>discutir Aristòtil</strong>.",
+ link:"Comencen a <strong>esquerdar la física d'Aristòtil</strong> des de dins i, sense saber-ho, preparen el terreny de Galileu: la ciència del moviment neix a la baixa edat mitjana."},
+{y:1347,date:"1347–1351 dC",t:"context",cat:"pol",name:"La Pesta Negra",sub:"la gran crisi",
+ lead:"Una pandèmia mata entre un terç i la meitat d'Europa. Amb les guerres i la fam, ensorra la confiança en l'ordre social i religiós.",
+ link:"La catàstrofe afebleix l'autoritat de l'Església i del món medieval: res no tornarà a ser igual."},
+{y:1378,date:"1378–1417 dC",t:"context",cat:"rel",name:"El Cisma d'Occident",sub:"dos i tres papes alhora",ill:"cross",
+ lead:"L'Església té alhora <strong>dos i fins a tres papes</strong> rivals; l'escàndol dura quaranta anys.",
+ link:"L'autoritat espiritual queda profundament desprestigiada: una esquerda per on entraran la Reforma i el món modern."},
+{y:1453,date:"1453 dC",t:"context",cat:"pol",name:"Caiguda de Constantinoble",sub:"final de l'Edat Mitjana",ill:"arch",
+ lead:"Els <strong>otomans</strong> prenen Constantinoble i s'acaba l'Imperi bizantí. Molts erudits grecs fugen cap a Itàlia <strong>amb els seus llibres</strong>.",
+ link:"Aquesta allau de textos grecs originals alimenta l'<strong>Humanisme</strong> i el Renaixement: s'obre una època nova."},
+{y:1450,date:"c. 1450 dC",t:"context",cat:"sci",name:"Gutenberg i la impremta",sub:"la revolució del llibre",ill:"book",
+ lead:"<strong>Gutenberg</strong> imprimeix amb <strong>tipus mòbils</strong>: els llibres es multipliquen i abarateixen, i el saber deixa de dependre de la còpia manual als monestirs.",
+ link:"El control eclesiàstic del coneixement s'esquerda. És, simbòlicament, el <strong>final de l'Edat Mitjana</strong> i el llindar de la modernitat."}
+],
+    subs: [
+ {name:"Patrística",y0:360,y1:640,c:"#cf6b6b",cent:"s. II–VII",
+  focus:"Construir una <strong>filosofia cristiana</strong> amb eines gregues (sobretot el neoplatonisme) i defensar la fe.",
+  q:"Com pensar la fe cristiana amb la raó grega?",
+  cause:"El cristianisme, ja religió oficial, hereta el llegat grecoromà i l'ha d'assimilar (Agustí)."},
+ {name:"Alta edat mitjana",y0:640,y1:1080,c:"#c79a3a",cent:"s. VIII–XI",
+  focus:"<strong>Salvar i transmetre</strong> el saber (monestirs, Carolingis) i fer els primers passos del mètode; en paral·lel, esclat de la filosofia <strong>àrab i jueva</strong>.",
+  q:"Com conservar i ordenar el saber antic?",
+  cause:"Europa rural i fragmentada; el saber es refugia als monestirs mentre l'islam el conrea i l'amplia."},
+ {name:"Escolàstica",y0:1080,y1:1300,c:"#5aa6d0",cent:"s. XI–XIII",
+  focus:"Conciliar <strong>fe i raó</strong> amb mètode sistemàtic (la <em>disputatio</em>); recuperar Aristòtil i bastir grans síntesis a les universitats.",
+  q:"Es poden harmonitzar la fe i la raó d'Aristòtil?",
+  cause:"Les traduccions de Toledo, les universitats i els ordes mendicants (Anselm, Aquino, Averroes, Maimònides)."},
+ {name:"Baixa edat mitjana",y0:1300,y1:1520,c:"#9d7bd8",cent:"s. XIV–XV",
+  focus:"Es <strong>trenca la síntesi</strong>: nominalisme (Occam), separació de fe i raó, primacia de la voluntat; i neix la ciència del moviment.",
+  q:"I si la fe i la raó van per camins separats?",
+  cause:"La Pesta Negra, els cismes i les guerres erosionen l'ordre medieval i anuncien el Renaixement."}
+],
+    traits: [
+ ["Teocentrisme","<strong>Déu</strong> és el centre i la mesura de tot: el cosmos és creació seva i només s'entén des d'Ell."],
+ ["Fe i raó","La gran qüestió de l'època. La raó es posa al servei de la fe —la filosofia, «serventa de la teologia»— per <em>entendre allò que es creu</em>; fins i tot es vol <strong>demostrar Déu</strong> (Anselm, les cinc vies d'Aquino)."],
+ ["Creació del no-res","El món <strong>no és etern</strong>: Déu el crea lliurement del no-res. És contingent —podria no existir— i depèn de Déu en cada instant."],
+ ["L'ésser humà, criatura de Déu","Definit per l'<strong>ànima immortal</strong>, el pecat, la gràcia i el lliure albir; la vida és un camí (<em>homo viator</em>) cap a la salvació."],
+ ["Història lineal i providencial","El temps té sentit i direcció: <strong>creació → caiguda → redempció → judici final</strong>, no l'etern retorn dels antics."],
+ ["Autoritat i tradició","Es pensa <strong>comentant</strong> textos autoritzats: la Bíblia, els Pares i, des del s. XIII, Aristòtil («el Filòsof»). L'argument d'autoritat hi té molt de pes."],
+ ["El problema dels universals","Un debat propi i central: els conceptes generals (home, blancor) existeixen de veritat (<strong>realisme</strong>) o són només noms (<strong>nominalisme</strong>)?"]
+]
+  },
+  moderna: {
+    brand: 'Filosofia moderna',
+    ymin: 1430, ymax: 1815, ppy: 16,
+    cyStart: 1450, cyEnd: 1800,
+    char: { h: 'La filosofia moderna', c: '#c8a24a', intro: `Trets de fons que comparteixen els pensadors moderns —racionalistes, empiristes i il·lustrats—, fills de la nova ciència i del gir al subjecte.` },
+    items: [
+// ---- Renaixement i Revolució Científica (s. XV–XVI) ----
+{y:1453,date:"1453",t:"context",cat:"pol",name:"Caiguda de Constantinoble",sub:"l'allau de textos grecs",ill:"arch",
+ lead:"Els <strong>otomans</strong> prenen Constantinoble (1453) i s'acaba l'Imperi bizantí; molts erudits grecs fugen cap a Itàlia <strong>amb els seus manuscrits</strong> (Plató, els tràgics, els científics).",
+ link:"Aquesta allau de textos grecs originals alimenta l'<strong>Humanisme</strong> i empeny el Renaixement: el saber antic torna de primera mà."},
+{y:1450,date:"c. 1440–1500",t:"context",cat:"sci",name:"La impremta",sub:"Gutenberg · la difusió del saber",ill:"book",
+ lead:"Els <strong>tipus mòbils</strong> multipliquen i abarateixen el llibre: les idees circulen ràpid i fora del control de l'Església i els monestirs.",
+ link:"És el motor material de l'Humanisme, la Reforma i la nova ciència. Sense impremta no hi ha modernitat."},
+{y:1500,date:"s. XV–XVI",t:"thought",cat:"phi",name:"L'Humanisme",sub:"Petrarca · Erasme · Pico",ill:"scroll",
+ lead:"Recuperació dels clàssics («<em>ad fontes</em>», a les fonts), confiança en la <strong>dignitat de l'home</strong> (Pico) i esperit crític i filològic (Erasme).",
+ link:"Desplaça l'home cap al centre de la reflexió: és el primer pas del <strong>gir antropocèntric</strong> modern."},
+{y:1492,date:"1492",t:"context",cat:"pol",name:"1492: un món nou",sub:"Amèrica · fi de Granada",ill:"globe",
+ lead:"Colom arriba a Amèrica; cau Granada (fi de la Reconquesta) i s'expulsen els jueus. S'obre l'era dels <strong>imperis i el comerç global</strong>.",
+ link:"Europa descobreix que els antics no ho sabien tot: l'experiència nova obliga a repensar el món i debilita l'autoritat de la tradició."},
+{y:1513,date:"1469–1527",t:"thought",cat:"phi",name:"Maquiavel",sub:"el realisme polític",ill:"scroll",
+ lead:"A «El Príncep» (1513) separa la <strong>política</strong> de la moral i la religió: estudia el poder tal com és, no com hauria de ser (la <em>virtù</em> i la <em>fortuna</em>).",
+ link:"Funda la ciència política moderna i secularitza la política: el primer que pensa l'Estat sense Déu."},
+{y:1517,date:"1517",t:"context",cat:"rel",name:"La Reforma protestant",sub:"Luter · les 95 tesis",ill:"cross",
+ lead:"Luter proclama la «<strong>sola scriptura</strong>» i el lliure examen: cada creient interpreta la Bíblia sense la mediació de Roma.",
+ link:"Trenca la unitat religiosa d'Europa i exalta la <strong>consciència individual</strong>, un dels orígens de l'autonomia moderna del subjecte."},
+{y:1543,date:"1543",t:"context",cat:"sci",name:"Copèrnic",sub:"l'heliocentrisme",ill:"cosmos",
+ lead:"Contra el geocentrisme de <strong>Ptolemeu i Aristòtil</strong>, «<em>De revolutionibus</em>» (1543) posa el <strong>Sol al centre</strong> i la Terra a girar (heliocentrisme); el mateix any Vesali refunda l'anatomia.",
+ link:"Comença la <strong>Revolució Científica</strong> i el «gir copernicà»: la Terra —i l'home— deixen de ser el centre de l'univers."},
+{y:1545,date:"1545–1563",t:"context",cat:"rel",name:"El Concili de Trento",sub:"la Contrareforma",ill:"cross",
+ lead:"L'Església catòlica respon a la Reforma: reafirma els dogmes i reforça l'<strong>Índex de llibres prohibits</strong>, la Inquisició i els jesuïtes.",
+ link:"Europa queda partida en dos blocs; la lliure recerca topa amb un control doctrinal renovat (que aviat patirà Galileu)."},
+{y:1580,date:"1533–1592",t:"thought",cat:"phi",name:"Montaigne",sub:"«Què sé jo?»",ill:"book",
+ lead:"Als «Assaigs» practica un <strong>escepticisme</strong> humà i tolerant: davant del fanatisme de les guerres de religió, dubta, s'observa a si mateix i suspèn els judicis absoluts.",
+ link:"Recupera l'escepticisme antic com a actitud moderna; serà el rival que Descartes voldrà superar."},
+{y:1609,date:"1609–1619",t:"context",cat:"sci",name:"Kepler",sub:"les òrbites el·líptiques",ill:"cosmos",
+ lead:"A partir de les dades de Tycho Brahe descobreix que els planetes giren en <strong>el·lipses</strong> i formula les lleis del moviment planetari.",
+ link:"Converteix l'heliocentrisme en una <strong>física precisa i matemàtica</strong>; obre el camí a Newton."},
+{y:1610,date:"1564–1642",t:"context",cat:"sci",name:"Galileu",sub:"la natura, escrita en matemàtiques",ill:"cosmos",
+ lead:"Amb el <strong>telescopi</strong> (1610) confirma Copèrnic i, contra <strong>Aristòtil</strong>, mostra que tots els cossos cauen igual: funda la física experimental i matemàtica («el llibre de la natura està escrit en llenguatge matemàtic»).",
+ link:"Uneix <strong>experiment i matemàtica</strong> —el mètode de la ciència moderna— i xoca de front amb l'Església."},
+{y:1620,date:"1561–1626",t:"thought",cat:"phi",name:"Francis Bacon",sub:"«saber és poder»",ill:"book",
+ lead:"Al «<em>Novum Organum</em>» (1620) proposa el <strong>mètode inductiu</strong> (de l'observació a la llei) i denuncia els «ídols» que enganyen la ment.",
+ link:"Pare de l'<strong>empirisme</strong> i del projecte tecnocientífic: el coneixement com a instrument de domini i progrés."},
+// ---- Racionalisme i empirisme · s. XVII ----
+{y:1633,date:"1633",t:"context",cat:"rel",name:"La condemna de Galileu",sub:"ciència contra Església",ill:"cross",
+ lead:"La Inquisició obliga Galileu a <strong>abjurar</strong> de l'heliocentrisme i el condemna a arrest domiciliari.",
+ link:"Símbol del xoc entre la nova ciència i l'autoritat religiosa; el centre de la ciència es desplaça al nord protestant."},
+{y:1637,date:"1596–1650",t:"thought",cat:"phi",name:"Descartes",sub:"«penso, llavors existeixo»",ill:"book",
+ lead:"El <strong>pare de la filosofia moderna</strong>. Amb el <strong>dubte metòdic</strong> arriba a una certesa indubtable, el «<em>cogito, ergo sum</em>», i d'aquí reconstrueix tot el saber. Dualisme ment / cos-màquina.",
+ link:"Posa el <strong>subjecte que pensa</strong> com a fonament de tot coneixement: el «naixement del jo» i del racionalisme."},
+{y:1648,date:"1618–1648",t:"context",cat:"pol",name:"La Pau de Westfàlia",sub:"neix l'Estat modern",ill:"arch",
+ lead:"Acaba la <strong>Guerra dels Trenta Anys</strong>, la més devastadora de les guerres de religió. S'imposa el principi de <strong>sobirania</strong>: cada estat decideix la seva religió.",
+ link:"Neix el sistema d'estats sobirans i la idea moderna de poder polític laic i territorial."},
+{y:1651,date:"1588–1679",t:"thought",cat:"phi",name:"Hobbes",sub:"el «Leviatan»",ill:"balance",
+ lead:"En l'estat de naturalesa hi ha «guerra de tots contra tots» («l'home és un llop per a l'home»). Per sobreviure, els individus <strong>pacten</strong> i cedeixen el poder a un sobirà absolut.",
+ link:"Primera gran teoria del <strong>contracte social</strong>: el poder ja no ve de Déu, sinó d'un pacte entre individus."},
+{y:1660,date:"1660 · 1666",t:"context",cat:"sci",name:"Les acadèmies científiques",sub:"Royal Society · Académie",ill:"atom",
+ lead:"Es funden la <strong>Royal Society</strong> de Londres (1660) i l'<strong>Académie des sciences</strong> de París (1666): la ciència s'organitza per experimentar, publicar i comunicar-se.",
+ link:"La ciència es torna una empresa <strong>col·lectiva i pública</strong>: el model de la recerca moderna."},
+{y:1675,date:"1632–1677",t:"thought",cat:"phi",name:"Spinoza",sub:"«Déu, és a dir, la Natura»",ill:"cosmos",
+ lead:"Racionalista radical. A l'«Ètica» defensa que només hi ha <strong>una substància</strong> infinita, Déu o la Natura («<em>Deus sive Natura</em>»): tot és necessari i determinat.",
+ link:"Porta el racionalisme al monisme i al determinisme, i obre la <strong>crítica laica de la religió</strong>."},
+{y:1689,date:"1632–1704",t:"thought",cat:"phi",name:"Locke",sub:"empirisme i liberalisme",ill:"book",
+ lead:"La ment neix com una «<strong>tabula rasa</strong>»: tot el coneixement ve de l'experiència. En política, drets naturals —vida, llibertat, propietat—, govern com a contracte revocable i tolerància.",
+ link:"Funda l'<strong>empirisme</strong> i el <strong>liberalisme polític</strong>: la base ideològica de les revolucions anglesa i americana."},
+{y:1688,date:"1688–1689",t:"context",cat:"pol",name:"La Revolució Gloriosa",sub:"monarquia parlamentària",ill:"arch",
+ lead:"Anglaterra deposa el rei absolutista i imposa al monarca el «<strong>Bill of Rights</strong>» (1689): el poder reial queda limitat pel Parlament i la llei.",
+ link:"Primer triomf pràctic del <strong>constitucionalisme</strong>; Locke en serà el teòric i inspirarà tot el liberalisme."},
+{y:1700,date:"1646–1716",t:"thought",cat:"phi",name:"Leibniz",sub:"les mònades",ill:"atom",
+ lead:"Últim gran racionalista i savi universal (coinventor del <strong>càlcul</strong>). L'univers es compon de «mònades» en «harmonia preestablerta»; com que Déu és perfecte, vivim «al <strong>millor dels mons possibles</strong>».",
+ link:"El racionalisme arriba al seu sistema més ambiciós; el seu optimisme serà el blanc de la sàtira de Voltaire."},
+// ---- La Il·lustració · s. XVIII ----
+{y:1715,date:"1643–1715",t:"context",cat:"pol",name:"Lluís XIV i l'absolutisme",sub:"«L'Estat sóc jo»",ill:"arch",
+ lead:"El «<strong>Rei Sol</strong>» encarna la monarquia absoluta de dret diví: tot el poder en el rei, cort a Versalles, centralització.",
+ link:"És el model que la Il·lustració i les revolucions voldran enderrocar en nom de la <strong>raó i els drets</strong>."},
+{y:1730,date:"s. XVIII",t:"context",cat:"rel",name:"Deisme i secularització",sub:"el Déu «rellotger»",ill:"cross",
+ lead:"Molts il·lustrats rebutgen la religió revelada sense ser atees: creuen en un Déu «<strong>rellotger</strong>» que crea l'univers-màquina i el deixa funcionar segons lleis. Tolerància i religió natural.",
+ link:"La fe es retira de l'explicació del món, que passa a la ciència: avança la <strong>secularització</strong> moderna."},
+{y:1739,date:"1711–1776",t:"thought",cat:"phi",name:"Hume",sub:"l'empirisme radical",ill:"book",
+ lead:"Porta l'empirisme cap a l'escepticisme: no podem demostrar la <strong>causalitat</strong> (només successió + hàbit) ni el <strong>jo</strong> (només un feix de percepcions); i no es dedueix el deure del ser.",
+ link:"El seu escepticisme «desperta Kant del son dogmàtic» i marca el <strong>límit del coneixement empíric</strong>."},
+{y:1748,date:"1689–1755",t:"thought",cat:"phi",name:"Montesquieu",sub:"la divisió de poders",ill:"balance",
+ lead:"A «L'esperit de les lleis» (1748) proposa separar els poders —<strong>legislatiu, executiu, judicial</strong>— perquè «el poder freni el poder» i no hi hagi tirania.",
+ link:"Dona a les democràcies modernes la seva <strong>arquitectura institucional</strong>; serà a totes les constitucions liberals."},
+{y:1750,date:"1694–1778",t:"thought",cat:"phi",name:"Voltaire",sub:"tolerància i raó",ill:"garden",
+ lead:"El gran polemista de la Il·lustració: defensa la <strong>llibertat d'expressió</strong> i la tolerància contra el fanatisme i l'Església («<em>Écrasez l'infâme</em>»). Deista.",
+ link:"Popularitza l'esperit crític i la lluita per les llibertats civils: encarna la Il·lustració militant."},
+{y:1751,date:"1751–1772",t:"context",cat:"sci",name:"L'Encyclopédie",sub:"Diderot · d'Alembert",ill:"book",
+ lead:"28 volums que reuneixen <strong>tot el saber humà</strong> —ciència, tècnica, oficis, idees— amb esperit crític i laic. Hi col·laboren els grans il·lustrats.",
+ link:"L'arma intel·lectual de la Il·lustració: difondre el coneixement per <strong>emancipar la raó</strong> de la superstició i l'autoritat."},
+{y:1762,date:"1712–1778",t:"thought",cat:"phi",name:"Rousseau",sub:"el contracte social",ill:"scroll",
+ lead:"«L'home neix lliure i pertot és encadenat». El poder legítim neix de la «<strong>voluntat general</strong>» del poble sobirà; a l'«Emili» repensa l'educació i critica que el progrés hagi corromput l'home.",
+ link:"Pare de la <strong>sobirania popular</strong> i inspirador de la Revolució Francesa i del Romanticisme."},
+{y:1769,date:"c. 1769–1780",t:"context",cat:"sci",name:"La Revolució Industrial",sub:"la màquina de vapor",ill:"coin",
+ lead:"La <strong>màquina de vapor</strong> de Watt (1769) i les fàbriques inicien una transformació econòmica i tècnica sense precedents: producció en massa, ciutats industrials, nova classe obrera.",
+ link:"El progrés tècnic somiat per Bacon es fa realitat i canvia el món material; prepara els problemes i les filosofies de l'època contemporània."},
+{y:1735,date:"1735 · 1789",t:"context",cat:"sci",name:"Linné i Lavoisier",sub:"ordenar i mesurar la natura",ill:"globe",
+ lead:"<strong>Linné</strong> classifica tots els éssers vius amb un sistema universal (1735); <strong>Lavoisier</strong> funda la química moderna amb la balança i la conservació de la massa (~1789).",
+ link:"La ciència del s. XVIII <strong>ordena i quantifica</strong> tota la natura, viva i material: el programa de Bacon i Galileu en plena marxa."},
+{y:1687,date:"1687",t:"context",cat:"sci",name:"Newton",sub:"la gravitació universal",ill:"atom",
+ lead:"Als «<em>Principia</em>» (1687) unifica el cel i la terra amb una sola llei —la <strong>gravitació universal</strong>— i les lleis del moviment. L'univers és un mecanisme matemàtic i previsible.",
+ link:"La gran <strong>síntesi</strong> de la Revolució Científica i el model de tota ciència; el seu univers-rellotge domina fins a Einstein."},
+{y:1776,date:"1776",t:"context",cat:"pol",name:"La independència dels EUA",sub:"la Declaració d'independència",ill:"scroll",
+ lead:"Les colònies americanes es proclamen independents en nom dels <strong>drets naturals</strong> i del govern del poble; la Declaració (1776) i la Constitució apliquen Locke i Montesquieu.",
+ link:"Primera gran <strong>revolució liberal</strong>: les idees il·lustrades es fan estat real."},
+{y:1776,date:"1723–1790",t:"thought",cat:"phi",name:"Adam Smith",sub:"la «mà invisible»",ill:"coin",
+ lead:"A «La riquesa de les nacions» (1776) funda l'economia moderna: si cadascú busca el seu interès en un <strong>mercat lliure</strong>, una «mà invisible» produeix el benefici col·lectiu.",
+ link:"Dona la teoria del <strong>liberalisme econòmic</strong>: el vessant econòmic de la Il·lustració."},
+{y:1781,date:"1724–1804",t:"thought",cat:"phi",name:"Kant",sub:"el gir copernicà",ill:"book",
+ lead:"Corona la filosofia moderna. A la «Crítica de la raó pura» (1781) <strong>sintetitza</strong> racionalisme i empirisme: els objectes s'ajusten a les formes de la ment (el «gir copernicà»); coneixem el <strong>fenomen</strong>, no el noümen. En ètica, l'<strong>imperatiu categòric</strong>.",
+ link:"Defineix la Il·lustració —«<em>Sapere aude</em>: atreveix-te a pensar» (1784)— i fixa el límit i la dignitat de la raó autònoma: el cim i el tancament de la modernitat."},
+// ---- Les revolucions liberals ----
+{y:1789,date:"1789",t:"context",cat:"pol",name:"La Revolució Francesa",sub:"llibertat, igualtat, fraternitat",ill:"battle",
+ lead:"El poble enderroca l'Antic Règim; la «<strong>Declaració dels Drets de l'Home i del Ciutadà</strong>» (1789) proclama la llibertat, la igualtat i la sobirania nacional.",
+ link:"Les idees de la Il·lustració es fan història i obren l'<strong>època contemporània</strong>; amb el Terror i Napoleó, també els seus dilemes."}
+],
+    subs: [
+ {name:"Renaixement i Revolució Científica",y0:1440,y1:1620,c:"#3f7fb0",cent:"s. XV–XVI",
+  focus:"Ruptura amb l'escolàstica i naixement de la <strong>ciència moderna</strong>: l'home (humanisme) i la natura (Copèrnic, Galileu) tornen al centre de la mirada.",
+  q:"Com conèixer el món per nosaltres mateixos, sense l'autoritat antiga?",
+  cause:"La impremta, els descobriments (1492) i la Reforma trenquen el món medieval; el 1543 comença la Revolució Científica."},
+ {name:"Racionalisme i empirisme",y0:1620,y1:1715,c:"#c08a34",cent:"s. XVII",
+  focus:"El <strong>problema del coneixement</strong> ho domina tot, amb dues vies rivals: la <strong>raó</strong> (Descartes, Spinoza, Leibniz) i l'<strong>experiència</strong> (Bacon, Locke).",
+  q:"Quin és l'origen i el límit del coneixement: la raó o l'experiència?",
+  cause:"Galileu i Newton matematitzen la natura; cal un <em>mètode</em> segur per a un saber nou i fiable."},
+ {name:"La Il·lustració",y0:1715,y1:1789,c:"#d4b042",cent:"s. XVIII",
+  focus:"La <strong>raó autònoma</strong> s'aplica a la societat: crítica de l'autoritat, tolerància, drets, divisió de poders i confiança en el <strong>progrés</strong>.",
+  q:"Pot la raó alliberar i millorar la humanitat? («Sapere aude»)",
+  cause:"Locke, Newton i l'Encyclopédie; l'ascens de la burgesia il·lustrada davant l'absolutisme."},
+ {name:"Les revolucions liberals",y0:1789,y1:1815,c:"#b5532e",cent:"finals s. XVIII",
+  focus:"Les idees es fan història: <strong>sobirania popular</strong>, drets de l'home i fi de l'Antic Règim; Kant clou la filosofia moderna.",
+  q:"Com ha de ser un poder legítim fundat en la raó i els drets?",
+  cause:"Les revolucions americana (1776) i francesa (1789) i la Revolució Industrial obren l'època contemporània."}
+],
+    traits: [
+ ["Antropocentrisme i gir al subjecte","L'<strong>home</strong> —i en concret el <strong>subjecte que coneix</strong>— passa al centre, en lloc de Déu (medieval) o del cosmos (antic). El punt de partida és el «jo» (el <em>cogito</em> de Descartes)."],
+ ["Autonomia de la raó","La raó s'allibera de l'<strong>autoritat</strong> (l'Església, Aristòtil, la tradició): cada individu ha de pensar per si mateix. El lema de Kant: «<em>Sapere aude</em>, atreveix-te a saber». Secularització."],
+ ["El problema del coneixement","La pregunta central ja no és «què és l'ésser» sinó «<strong>què i com puc conèixer</strong>» (gnoseologia). D'aquí el gran debat: <strong>racionalisme</strong> (la raó) contra <strong>empirisme</strong> (l'experiència)."],
+ ["Mètode i matematització de la natura","Per a un saber segur cal un <strong>mètode</strong> (Descartes, Bacon). La natura s'escriu en llenguatge <strong>matemàtic</strong> (Galileu, Newton) i es coneix mesurant i experimentant."],
+ ["Mecanicisme","L'univers —i fins i tot el cos i els animals— és una gran <strong>màquina</strong> regida per lleis, no per finalitats. Déu, si de cas, és el «rellotger» que la posa en marxa (deisme)."],
+ ["Confiança en el progrés","La raó i la ciència milloraran la vida humana: neix la idea moderna de <strong>progrés</strong> històric, l'optimisme de la Il·lustració."],
+ ["Individu, drets i contracte social","La societat i el poder no vénen de Déu sinó d'un <strong>pacte</strong> entre individus lliures amb <strong>drets naturals</strong> (Hobbes, Locke, Rousseau) → les revolucions liberals."]
+]
+  },
+  contemporania: {
+    brand: 'Filosofia contemporània',
+    ymin: 1790, ymax: 2055, ppy: 26,
+    cyStart: 1800, cyEnd: 2000,
+    char: { h: 'La filosofia contemporània', c: '#6fa8d6', intro: `Trets de fons d'un pensament que desconfia de la Raó il·lustrada, es descobreix històric i mira de respondre a les catàstrofes i les tècniques del seu temps.` },
+    items: [
+// ---- Idealisme i revolució (s. XIX, 1a meitat) ----
+{y:1807,date:"1770–1831",t:"thought",cat:"phi",name:"Hegel",sub:"l'idealisme i la dialèctica",ill:"cosmos",
+ lead:"L'últim gran sistema: tota la realitat és el desplegament de l'<strong>Esperit</strong> (la Raó) en la història, mitjançant la <strong>dialèctica</strong> (tesi–antítesi–síntesi). «Tot el que és racional és real.» La <em>Fenomenologia de l'Esperit</em> (1807).",
+ link:"De la seva escola en surten els <strong>hegelians d'esquerra</strong> (Marx) i, per reacció, gairebé tota la filosofia posterior."},
+{y:1830,date:"1798–1857",t:"thought",cat:"phi",name:"Comte i el positivisme",sub:"la llei dels tres estats",ill:"atom",
+ lead:"Només és vàlid el saber <strong>científic</strong>, basat en fets i lleis. La humanitat passa per tres estats —teològic, metafísic i <strong>positiu</strong>—. Funda la <strong>sociologia</strong>.",
+ link:"Dona forma al <strong>cientifisme</strong>: la fe que la ciència ho explicarà i ho ordenarà tot, també la societat."},
+{y:1843,date:"1813–1855",t:"thought",cat:"phi",name:"Kierkegaard",sub:"el pare de l'existencialisme",ill:"book",
+ lead:"Contra el sistema fred de Hegel, reivindica l'<strong>individu</strong> concret, l'<strong>angoixa</strong> de l'elecció i el «salt de fe». Distingeix els estadis estètic, ètic i religiós.",
+ link:"Plantar la pregunta pel <strong>sentit de l'existència individual</strong> el converteix en el precursor de l'existencialisme."},
+{y:1815,date:"1815",t:"context",cat:"pol",name:"El Congrés de Viena",sub:"la Restauració",ill:"arch",
+ lead:"Derrotat Napoleó, les potències <strong>restauren</strong> l'ordre antic i miren d'esborrar la Revolució. Però les idees <strong>liberals i nacionals</strong> ja no es poden aturar.",
+ link:"El s. XIX serà la pugna entre Restauració i revolució: liberalisme, nacionalisme i, aviat, moviment obrer."},
+// ---- Les filosofies de la sospita (s. XIX, 2a meitat) ----
+{y:1848,date:"1848",t:"context",cat:"pol",name:"Les revolucions de 1848",sub:"la Primavera dels Pobles",ill:"battle",
+ lead:"Una onada de <strong>revolucions</strong> liberals i nacionals sacseja Europa. El mateix any, Marx i Engels publiquen el <strong>Manifest comunista</strong>.",
+ link:"Irromp el <strong>moviment obrer</strong> com a força del segle, al costat del liberalisme i el nacionalisme."},
+{y:1859,date:"1806–1873",t:"thought",cat:"phi",name:"Stuart Mill",sub:"utilitarisme i llibertat",ill:"balance",
+ lead:"Perfecciona l'<strong>utilitarisme</strong> (la major felicitat per al major nombre, amb plaers superiors). A <em>Sobre la llibertat</em> (1859) formula el <strong>principi del dany</strong>: l'Estat només pot limitar-me si faig mal a altri. Defensa el vot de les dones.",
+ link:"Fonament del <strong>liberalisme</strong> ètic i polític; encara avui és clau per pensar els límits de la llibertat."},
+{y:1859,date:"1859",t:"context",cat:"sci",name:"Darwin",sub:"l'evolució per selecció natural",ill:"globe",
+ lead:"<em>L'origen de les espècies</em> (1859): les espècies <strong>evolucionen</strong> per selecció natural; l'home és un animal més, sense un disseny previ.",
+ link:"Segona «humiliació» còsmica (després de Copèrnic): l'home perd el lloc especial a la creació; xoc frontal amb la religió."},
+{y:1860,date:"s. XIX",t:"context",cat:"rel",name:"La secularització",sub:"la «mort de Déu» cultural",ill:"cross",
+ lead:"Amb la ciència (Darwin), la crítica (Feuerbach: Déu és una <strong>projecció</strong> humana; Marx: «opi del poble») i Nietzsche, la religió perd el <strong>monopoli del sentit</strong> a Occident.",
+ link:"La <strong>secularització</strong> —la retirada de la religió de la vida pública— és un dels grans fets de l'època contemporània."},
+{y:1867,date:"1818–1883",t:"thought",cat:"phi",name:"Marx",sub:"el materialisme històric",ill:"coin",
+ lead:"La història és <strong>lluita de classes</strong>; l'economia condiciona les idees. Critica el capitalisme: <strong>plusvàlua</strong> i <strong>alienació</strong>. «Els filòsofs només han interpretat el món; del que es tracta és de transformar-lo.» Manifest (1848), El Capital (1867).",
+ link:"Un dels pensaments més influents de la història: inspirarà revolucions, sindicats, l'estat del benestar i tota la crítica social."},
+{y:1870,date:"c. 1870–1914",t:"context",cat:"sci",name:"La 2a revolució industrial",sub:"electricitat, acer, química",ill:"coin",
+ lead:"<strong>Electricitat</strong>, motor de combustió, acer, telègraf i telèfon transformen la producció i la vida quotidiana. Neix la <strong>societat de masses</strong>.",
+ link:"L'accelerament tècnic crea el món del proletariat i del consum que pensaran Marx i, després, l'Escola de Frankfurt."},
+{y:1880,date:"c. 1880–1914",t:"context",cat:"pol",name:"Imperialisme i masses",sub:"el repartiment del món",ill:"globe",
+ lead:"Les potències europees es reparteixen <strong>Àfrica i Àsia</strong>; creixen les ciutats, la premsa i les <strong>masses</strong>, i s'exalta el <strong>nacionalisme</strong>.",
+ link:"El polvorí de tensions que esclatarà el 1914; també la «qüestió social» que alimenta el socialisme."},
+{y:1883,date:"1844–1900",t:"thought",cat:"phi",name:"Nietzsche",sub:"«Déu ha mort»",ill:"snake",
+ lead:"La moral cristiana és una «moral d'esclaus» nascuda del <strong>ressentiment</strong>; proclama la <strong>mort de Déu</strong> i el perill del <strong>nihilisme</strong>. Cal una <strong>transvaloració</strong> de tots els valors: voluntat de poder, superhome, etern retorn. <em>Així parlà Zaratustra</em> (1883).",
+ link:"Un dels grans crítics de la tradició; influeix l'existencialisme, la psicoanàlisi i la postmodernitat."},
+{y:1900,date:"1856–1939",t:"context",cat:"sci",name:"Freud",sub:"l'inconscient",ill:"book",
+ lead:"Descobreix l'<strong>inconscient</strong>: molt del que fem ve de desitjos reprimits. Divideix el psiquisme (allò, jo, superjò) i interpreta somnis i lapsus (<em>La interpretació dels somnis</em>, 1900).",
+ link:"Tercera «humiliació» (Copèrnic, Darwin, Freud): l'home <strong>no és amo ni de la seva pròpia ment</strong>. Un dels «mestres de la sospita»."},
+// ---- Crisi, guerres i nous mètodes (1a meitat s. XX) ----
+{y:1914,date:"1914–1918",t:"context",cat:"pol",name:"La Primera Guerra Mundial",sub:"la Gran Guerra",ill:"battle",
+ lead:"Una guerra <strong>industrial i total</strong> mata milions de persones i ensorra els vells imperis.",
+ link:"El trauma que enfonsa l'optimisme del s. XIX en el <strong>progrés</strong> i obre la crisi espiritual del s. XX."},
+{y:1913,date:"1859–1938",t:"thought",cat:"phi",name:"Husserl",sub:"la fenomenologia",ill:"book",
+ lead:"Funda la <strong>fenomenologia</strong>: «tornar a les coses mateixes», descrivint els fenòmens tal com es donen a la consciència i posant entre parèntesi (<em>epojé</em>) els prejudicis. La consciència sempre és <strong>consciència d'alguna cosa</strong>.",
+ link:"El mètode que farà possible Heidegger, Sartre i Merleau-Ponty: el gran corrent <strong>continental</strong>."},
+{y:1915,date:"1905 · 1915",t:"context",cat:"sci",name:"Einstein i la física nova",sub:"relativitat i quàntica",ill:"cosmos",
+ lead:"La <strong>relativitat</strong> capgira l'espai i el temps absoluts de Newton; la <strong>física quàntica</strong> (Planck, Bohr, Heisenberg) introdueix l'<strong>atzar</strong> al cor de la matèria.",
+ link:"S'esfondra l'univers-rellotge determinista de la modernitat: ni tan sols la ciència té certeses absolutes."},
+{y:1917,date:"1917",t:"context",cat:"pol",name:"La Revolució Russa",sub:"el comunisme al poder",ill:"battle",
+ lead:"Els <strong>bolxevics</strong> prenen el poder i funden el primer estat que diu aplicar Marx; en naixerà l'<strong>URSS</strong>.",
+ link:"El marxisme es fa estat: dividirà el s. XX en <strong>dos blocs</strong> enfrontats."},
+{y:1921,date:"1889–1951",t:"thought",cat:"phi",name:"Wittgenstein",sub:"els límits del llenguatge",ill:"book",
+ lead:"Primer: «els límits del meu llenguatge són els límits del meu món»; molts problemes filosòfics són confusions del llenguatge (<em>Tractatus</em>, 1921). Després: el sentit és l'<strong>ús</strong>, els «jocs de llenguatge» (1953).",
+ link:"Figura central del <strong>gir lingüístic</strong> i de la filosofia <strong>analítica</strong> anglosaxona."},
+{y:1927,date:"1889–1976",t:"thought",cat:"phi",name:"Heidegger",sub:"l'ésser i el temps",ill:"book",
+ lead:"Refà la pregunta per l'<strong>ésser</strong>. L'home (<em>Dasein</em>) és un ésser <strong>llançat al món</strong> i abocat a la mort; viure de cara a la pròpia finitud és viure amb autenticitat (<em>Ésser i temps</em>, 1927). (El seu compromís amb el nazisme n'enterboleix la figura.)",
+ link:"L'ontologia més influent del s. XX; marca tota la filosofia continental posterior."},
+{y:1933,date:"1922 · 1933",t:"context",cat:"pol",name:"Els feixismes",sub:"feixisme i nazisme",ill:"helm",
+ lead:"Davant la crisi i la por al comunisme, triomfen els <strong>totalitarismes</strong> (Mussolini 1922, Hitler 1933): culte al líder, raça, violència i fi de la democràcia.",
+ link:"La raó il·lustrada sembla impotent; és el context que pensaran <strong>Arendt</strong> i l'Escola de Frankfurt."},
+{y:1939,date:"1939–1945",t:"context",cat:"pol",name:"2a Guerra Mundial i Shoah",sub:"la guerra total i el genocidi",ill:"battle",
+ lead:"La guerra més mortífera de la història; el règim nazi <strong>assassina sistemàticament sis milions de jueus</strong> (la Shoah).",
+ link:"El mal absolut al cor d'Europa «civilitzada» obliga a <strong>repensar-ho tot</strong> (Arendt; Adorno)."},
+// ---- Postguerra i sospita del subjecte (2a meitat s. XX) ----
+{y:1945,date:"1905–1980",t:"thought",cat:"phi",name:"Sartre",sub:"l'existencialisme",ill:"book",
+ lead:"«L'<strong>existència precedeix l'essència</strong>»: no hi ha una natura humana donada, ens fem amb les nostres eleccions. Estem «<strong>condemnats a ser lliures</strong>» i, doncs, responsables; d'aquí l'angoixa i la «mala fe». <em>L'ésser i el no-res</em> (1943).",
+ link:"La filosofia de la <strong>llibertat</strong> de la postguerra; l'intel·lectual compromès per excel·lència."},
+{y:1945,date:"1945",t:"context",cat:"sci",name:"La bomba atòmica",sub:"Hiroshima i Nagasaki",ill:"atom",
+ lead:"El 1945 cauen dues bombes atòmiques sobre el Japó: la ciència demostra que pot <strong>destruir la humanitat sencera</strong>.",
+ link:"El somni il·lustrat de la ciència com a progrés es trenca; neix la consciència del <strong>risc tecnològic</strong>."},
+{y:1947,date:"dècades 1930–60",t:"thought",cat:"phi",name:"L'Escola de Frankfurt",sub:"la teoria crítica",ill:"book",
+ lead:"Marxistes heterodoxos (Adorno, Horkheimer, Marcuse). A <em>Dialèctica de la Il·lustració</em> (1947): la <strong>raó instrumental</strong>, que havia d'emancipar, acaba dominant —la indústria cultural, el totalitarisme—.",
+ link:"Crítica de la modernitat i de la societat de consum; un dels combustibles intel·lectuals del <strong>maig del 68</strong>."},
+{y:1948,date:"1947–1948",t:"context",cat:"pol",name:"Drets Humans i Guerra Freda",sub:"l'ONU i la Declaració Universal",ill:"balance",
+ lead:"Després de la catàstrofe, l'ONU proclama la <strong>Declaració Universal dels Drets Humans</strong> (1948). Però el món es parteix en dos blocs (EUA–URSS): la <strong>Guerra Freda</strong>.",
+ link:"Els <strong>drets humans</strong> esdevenen el llenguatge moral global; reneix la filosofia política (Rawls)."},
+{y:1949,date:"1908–1986",t:"thought",cat:"phi",name:"Simone de Beauvoir",sub:"el feminisme filosòfic",ill:"book",
+ lead:"«No es neix dona: s'arriba a ser-ho.» El que anomenem «la dona» és una <strong>construcció social</strong>, no un destí biològic. <em>El segon sexe</em> (1949).",
+ link:"Posa la base filosòfica del <strong>feminisme</strong> contemporani."},
+{y:1951,date:"1906–1975",t:"thought",cat:"phi",name:"Hannah Arendt",sub:"el totalitarisme i el mal",ill:"balance",
+ lead:"Analitza els orígens del <strong>totalitarisme</strong> i encunya la «<strong>banalitat del mal</strong>» (1963): el mal extrem el poden cometre buròcrates obedients que han deixat de <strong>pensar</strong>. Reivindica l'acció i l'espai públic.",
+ link:"Filosofia política nascuda de l'experiència directa de la Shoah i l'exili."},
+{y:1953,date:"1953",t:"context",cat:"sci",name:"L'ADN",sub:"la doble hèlix",ill:"snake",
+ lead:"Watson i Crick descriuen l'estructura de l'<strong>ADN</strong> (1953): la vida es pot <strong>llegir</strong> i, després, <strong>manipular</strong>.",
+ link:"Obre l'era de la <strong>biotecnologia</strong> i, amb ella, els grans dilemes <strong>bioètics</strong>."},
+{y:1959,date:"1902–1994",t:"thought",cat:"phi",name:"Popper",sub:"la falsabilitat",ill:"atom",
+ lead:"Una teoria és <strong>científica</strong> si es pot <strong>refutar</strong> (falsar), no pel fet de poder-se confirmar. Per això acusa el marxisme i la psicoanàlisi de ser <strong>infalsables</strong>. Defensa la «societat oberta».",
+ link:"Redefineix què és la ciència i obre la <strong>filosofia de la ciència</strong> del s. XX."},
+{y:1962,date:"1922–1996",t:"thought",cat:"phi",name:"Kuhn",sub:"els paradigmes",ill:"atom",
+ lead:"La ciència no avança només acumulant dades: de tant en tant fa <strong>revolucions</strong>, «canvis de <strong>paradigma</strong>» que reorganitzen tota la visió del món (1962).",
+ link:"Relativitza la idea d'un progrés científic lineal i objectiu; debat clau amb Popper."},
+{y:1962,date:"1962–1965",t:"context",cat:"rel",name:"El Concili Vaticà II",sub:"l'Església i el món modern",ill:"cross",
+ lead:"L'Església catòlica s'<strong>obre al món modern</strong>: litúrgia en llengües vives, diàleg amb altres religions i amb la ciència, llibertat religiosa.",
+ link:"Intent de reconciliar fe i modernitat; tot i així, la secularització continua a Occident."},
+{y:1968,date:"1968",t:"context",cat:"pol",name:"El maig del 68",sub:"nous moviments",ill:"battle",
+ lead:"Estudiants i treballadors es revolten (París i arreu). Emergeixen amb força el <strong>feminisme</strong>, els <strong>drets civils</strong>, l'<strong>ecologisme</strong> i la contracultura.",
+ link:"Nous subjectes polítics i una «nova esquerra»: el context de Foucault, Frankfurt i els feminismes."},
+{y:1969,date:"1969",t:"context",cat:"sci",name:"L'home a la Lluna",sub:"la cursa espacial",ill:"cosmos",
+ lead:"El 1969 l'home <strong>trepitja la Lluna</strong>: cim de la tecnologia de la Guerra Freda. Per primer cop veiem una foto de la <strong>Terra sencera</strong>.",
+ link:"Símbol del poder tecnocientífic; aquella imatge fràgil del planeta encén la <strong>consciència ecològica</strong>."},
+{y:1971,date:"1921–2002",t:"thought",cat:"phi",name:"Rawls",sub:"la justícia com a equitat",ill:"balance",
+ lead:"<em>Una teoria de la justícia</em> (1971): quins principis triaríem per a la societat darrere un «<strong>vel d'ignorància</strong>», sense saber quina posició hi ocuparíem? Així concilia <strong>llibertat</strong> i <strong>igualtat</strong>.",
+ link:"Ressuscita la <strong>filosofia política</strong> normativa; marc del debat actual (amb Nozick, el comunitarisme...)."},
+{y:1975,date:"1926–1984",t:"thought",cat:"phi",name:"Foucault",sub:"saber i poder",ill:"book",
+ lead:"Mostra com el <strong>poder</strong> produeix sabers i <strong>disciplina</strong> els cossos: presons, hospitals, escoles, la sexualitat (<em>Vigilar i castigar</em>, 1975). Anuncia la «mort de l'home».",
+ link:"Amb Lévi-Strauss, Derrida i Deleuze, el gran corrent <strong>(post)estructuralista</strong> francès."},
+{y:1979,date:"1924–1998",t:"thought",cat:"phi",name:"Lyotard",sub:"la postmodernitat",ill:"book",
+ lead:"<em>La condició postmoderna</em> (1979): cau la confiança en els «<strong>grans relats</strong>» que donaven sentit (el progrés, la raó, l'emancipació). Queda la pluralitat, la fragmentació i la sospita de tota veritat total.",
+ link:"Diagnòstic de la cultura de finals del s. XX; obre el debat sobre la <strong>postmodernitat</strong>."},
+// ---- El món global (de 1989 a avui) ----
+{y:1989,date:"1989–1991",t:"context",cat:"pol",name:"La caiguda del Mur",sub:"fi de la Guerra Freda",ill:"globe",
+ lead:"Cau el <strong>Mur de Berlín</strong> (1989) i s'enfonsa el bloc soviètic; triomfa (de moment) el model <strong>liberal-capitalista</strong> i s'accelera la <strong>globalització</strong>.",
+ link:"«El final de la història» (Fukuyama)? Més aviat l'inici d'un món global, <strong>desigual i incert</strong>."},
+{y:1990,date:"finals s. XX",t:"context",cat:"rel",name:"El retorn del religiós",sub:"identitats i fonamentalismes",ill:"cross",
+ lead:"Contra la previsió que la religió desapareixeria, <strong>ressorgeix</strong> amb força a tot el món, sovint com a <strong>fonamentalisme</strong> i marcador d'identitat.",
+ link:"La religió torna a l'espai públic global: un repte nou per a la <strong>raó laica</strong> i la convivència."},
+{y:1991,date:"c. 1990",t:"context",cat:"sci",name:"La revolució digital",sub:"ordinadors i internet",ill:"atom",
+ lead:"L'<strong>ordinador</strong> personal i <strong>internet</strong> (la web, 1991) transformen el treball, la comunicació i el coneixement: la societat de la <strong>informació</strong>.",
+ link:"Un canvi comparable a la impremta; redefineix la vida social, l'economia i la privacitat."},
+{y:2000,date:"1947–",t:"thought",cat:"phi",name:"Nussbaum",sub:"l'enfocament de les capacitats",ill:"balance",
+ lead:"Amb A. Sen, mesura el desenvolupament no per la riquesa sinó per les <strong>capacitats</strong> reals de cada persona per dur una vida digna. Reivindica les <strong>emocions</strong> i les humanitats per a la democràcia.",
+ link:"Una de les veus <strong>ètiques i polítiques</strong> més influents avui; hereva crítica d'Aristòtil, Kant i Mill."},
+{y:2020,date:"segle XXI",t:"context",cat:"sci",name:"IA, genètica i clima",sub:"els dilemes del segle XXI",ill:"atom",
+ lead:"<strong>Intel·ligència artificial</strong>, edició genètica (CRISPR), big data i <strong>crisi climàtica</strong> (l'Antropocè) plantegen problemes ètics inèdits.",
+ link:"La filosofia torna a ser urgent: què és la <strong>ment</strong>, què podem fer amb la tècnica i com salvem el planeta."}
+],
+    subs: [
+ {name:"Idealisme i revolució",y0:1790,y1:1848,c:"#b5532e",cent:"s. XIX · 1a meitat",
+  focus:"Després de Hegel —l'últim gran sistema—, la filosofia es debat entre l'<strong>idealisme</strong>, el <strong>positivisme</strong> (Comte) i l'<strong>utilitarisme</strong> (Mill), mentre l'individu reclama el seu lloc (Kierkegaard).",
+  q:"Pot la Raó comprendre i completar la història?",
+  cause:"L'Europa de la Restauració i de les revolucions liberals; la industrialització en marxa."},
+ {name:"Les filosofies de la sospita",y0:1848,y1:1900,c:"#c0392b",cent:"s. XIX · 2a meitat",
+  focus:"<strong>Marx, Nietzsche</strong> i, al tombant, <strong>Freud</strong> desemmascaren el que s'amaga sota la «raó»: interessos de classe, voluntat de poder, desitjos inconscients. <strong>Darwin</strong> descentra l'home.",
+  q:"Què s'amaga darrere la consciència i els «valors»?",
+  cause:"Capitalisme industrial, imperialisme, moviment obrer i crisi de la religió."},
+ {name:"Crisi, guerres i nous mètodes",y0:1900,y1:1945,c:"#5f6f86",cent:"s. XX · 1a meitat",
+  focus:"Neixen la <strong>fenomenologia</strong> (Husserl, Heidegger), la filosofia <strong>analítica</strong> (Wittgenstein) i la nova <strong>física</strong> (Einstein); el món s'enfonsa en les <strong>guerres mundials</strong> i els totalitarismes.",
+  q:"Com pensar quan trontollen la raó, la ciència i la civilització?",
+  cause:"Les dues guerres mundials, els feixismes i la crisi dels fonaments."},
+ {name:"Postguerra i sospita del subjecte",y0:1945,y1:1989,c:"#3f7fb0",cent:"s. XX · 2a meitat",
+  focus:"<strong>Existencialisme</strong> (Sartre, Beauvoir), <strong>teoria crítica</strong> (Frankfurt, Arendt), filosofia de la ciència (Popper, Kuhn) i <strong>estructuralisme</strong> (Foucault): la llibertat, el poder i el llenguatge.",
+  q:"Què és l'home —si és que «l'home» existeix— després d'Auschwitz?",
+  cause:"Guerra Freda, descolonització, Estat del benestar, drets humans i el maig del 68."},
+ {name:"El món global",y0:1989,y1:2055,c:"#2f8fa0",cent:"de 1989 a avui",
+  focus:"<strong>Postmodernitat</strong> (Lyotard), <strong>justícia</strong> i drets (Rawls, Nussbaum), <strong>ètica aplicada</strong> (bioètica, feminismes, ecologia) i els reptes de la tècnica.",
+  q:"Hi ha veritats i valors universals en un món plural i tecnològic?",
+  cause:"Caiguda del Mur, globalització, revolució digital, IA i crisi climàtica."}
+],
+    traits: [
+ ["Sospita de la Raó","Després de Hegel, la filosofia desconfia de la <strong>Raó</strong> totpoderosa de la Il·lustració. Els «mestres de la sospita» (<strong>Marx, Nietzsche, Freud</strong>) mostren que sota la «raó» hi ha interessos de classe, voluntat de poder i desitjos inconscients."],
+ ["Historicitat","L'home i la veritat ja no es veuen com a eterns sinó com a <strong>històrics</strong>: la moral, la societat i la mateixa raó tenen gènesi i canvien (Hegel, Marx, Darwin)."],
+ ["Materialisme i crítica social","El pensament es gira cap a l'economia, la societat i la <strong>praxi</strong>: no només interpretar el món, sinó <strong>transformar-lo</strong> (Marx); neixen les ciències socials (Comte)."],
+ ["Existència i sentit","Davant del món desencantat i de les masses, torna la pregunta pel <strong>sentit</strong> de l'existència, la <strong>llibertat</strong> i l'angoixa (Kierkegaard, Nietzsche, existencialisme)."],
+ ["El gir lingüístic","Bona part de la filosofia del s. XX se centra en el <strong>llenguatge</strong> com a límit i condició del pensament (Wittgenstein, filosofia analítica, estructuralisme, hermenèutica)."],
+ ["Crisi dels fonaments","Cau la certesa: la <strong>física</strong> (relativitat, quàntica) trenca l'univers-rellotge; el saber científic és revisable (Popper, Kuhn) i la <strong>postmodernitat</strong> desconfia dels «grans relats» (Lyotard)."],
+ ["Ètica aplicada i drets","Després de les catàstrofes del s. XX (guerres, Shoah, bomba), la filosofia torna a la <strong>pràctica</strong>: drets humans, justícia (Rawls), feminisme, bioètica, ecologia (Nussbaum)."]
+]
+  }
+};
+
+/* ============ ESTAT + REFS ============ */
+const stage=document.getElementById('stage');
+const timeline=document.getElementById('timeline');
+const brandtxt=document.getElementById('brandtxt');
+const LANE_H=44, CARD_H=58, GAP_AXIS=46, PAD=150;
+let X = y=>y, totalW=0, sorted=[], curEra='antiga';
+
+/* ============ HELPERS ============ */
+function roman(n){const m=[["M",1000],["CM",900],["D",500],["CD",400],["C",100],["XC",90],["L",50],["XL",40],["X",10],["IX",9],["V",5],["IV",4],["I",1]];let r="";for(const[s,v]of m){while(n>=v){r+=s;n-=v;}}return r;}
+function centuryLabel(y){if(y<0)return "s. "+roman(Math.ceil(Math.abs(y)/100))+" aC";return "s. "+roman(Math.ceil((y+1)/100)||1)+" dC";}
+function assignLanes(list){
+  const lanes=[]; // last right edge per lane
+  list.sort((a,b)=>a.y-b.y);
+  list.forEach(it=>{
+    const w=Math.min(188,Math.max(100,(it.name.length*7)+34));
+    const left=X(it.y)-w/2, right=X(it.y)+w/2;
+    let placed=false;
+    for(let i=0;i<lanes.length;i++){ if(left> lanes[i]+16){ it.lane=i; lanes[i]=right; placed=true; break; } }
+    if(!placed){ it.lane=lanes.length; lanes.push(right); }
+  });
+  return lanes.length;
+}
+function hexA(hex,a){const x=hex.replace('#','');return `rgba(${parseInt(x.slice(0,2),16)},${parseInt(x.slice(2,4),16)},${parseInt(x.slice(4,6),16)},${a})`;}
+
+/* ============ CONSTRUCCIÓ DE L'EIX (per època) ============ */
+function buildEra(key){
+  curEra=key;
+  const D=ERA_DATA[key];
+  const YMIN=D.ymin, YMAX=D.ymax, PPY=D.ppy;
+  totalW=(YMAX-YMIN)*PPY+PAD*2;
+  X = y=>(y-YMIN)*PPY+PAD;
+  const ITEMS=D.items;
+  timeline.innerHTML='';
+
+  const thoughts=ITEMS.filter(i=>i.t==='thought');
+  const contexts=ITEMS.filter(i=>i.t==='context');
+  const nT=assignLanes(thoughts), nC=assignLanes(contexts);
+  const topExtent=GAP_AXIS+nT*LANE_H+CARD_H;
+  const botExtent=GAP_AXIS+nC*LANE_H+CARD_H;
+  let H=topExtent+botExtent+40;
+  const vh=window.innerHeight-58;
+  const axisY=Math.max(topExtent+20,(H/2));
+  timeline.style.width=totalW+'px';
+  timeline.style.height=H+'px';
+
+  // century gridlines + labels
+  for(let cy=D.cyStart;cy<=D.cyEnd;cy+=100){
+    const g=document.createElement('div');g.className='gridc';g.style.left=X(cy)+'px';timeline.appendChild(g);
+    const l=document.createElement('div');l.className='clabel';l.style.left=X(cy+50)+'px';l.style.top='10px';
+    const cl=centuryLabel(cy+50), rn=cl.replace('s. ','').replace(/ (aC|dC)$/,'');
+    l.innerHTML=rn+'<span class="sub">'+(cy+50<0?'aC':'dC')+'</span>';
+    timeline.appendChild(l);
+  }
+  // axis
+  const axis=document.createElement('div');axis.className='axis';axis.style.top=axisY+'px';timeline.appendChild(axis);
+
+  // nodes
+  sorted=ITEMS.slice().sort((a,b)=>a.y-b.y);
+  ITEMS.forEach(it=>{
+    const cat=CAT[it.cat], c=cat.c;
+    const isT=it.t==='thought';
+    const y = isT ? (axisY-GAP_AXIS-(it.lane*LANE_H)-CARD_H) : (axisY+GAP_AXIS+(it.lane*LANE_H));
+    const node=document.createElement('div');
+    node.className='node '+(isT?'thought':'context');
+    node.style.left=X(it.y)+'px'; node.style.top=y+'px'; node.style.color=c;
+    const d = GAP_AXIS + it.lane*LANE_H;
+    const connStyle = isT ? `top:${CARD_H}px;height:${d}px` : `top:${-d}px;height:${d}px`;
+    const orbTop = isT ? (CARD_H + d - 5) : (-d - 5);
+    node.innerHTML=
+      `<div class="chip"><span class="yr">${it.date}</span><span class="nm">${it.name}</span>${it.sub?`<span class="sb">${it.sub}</span>`:''}</div>
+       <div class="conn" style="${connStyle}"></div>
+       <div class="orb" style="top:${orbTop}px"></div>`;
+    node.addEventListener('click',e=>{e.stopPropagation();openDetail(sorted.indexOf(it));});
+    timeline.appendChild(node);
+  });
+
+  // subperíodes band
+  const SUBPERIODS=D.subs;
+  const periodTop=axisY+botExtent+24;
+  const cap=document.createElement('div');cap.className='bandcap';cap.style.top=(periodTop-15)+'px';cap.textContent='Subperíodes';timeline.appendChild(cap);
+  const band=document.createElement('div');band.className='periodband';band.style.top=periodTop+'px';band.style.width=totalW+'px';
+  SUBPERIODS.forEach(sp=>{
+    const seg=document.createElement('div');seg.className='pseg';
+    seg.style.left=X(sp.y0)+'px';seg.style.width=(X(sp.y1)-X(sp.y0)-6)+'px';
+    seg.style.borderColor=sp.c;seg.style.background=hexA(sp.c,0.16);
+    seg.innerHTML=`<span class="pn">${sp.name}</span><span class="pc" style="color:${sp.c}">${sp.cent}</span>`;
+    seg.addEventListener('click',ev=>{ev.stopPropagation();openInfo({pk:'Subperíode · '+sp.cent,h:sp.name,c:sp.c,
+      html:`<div class="sec"><h4>Focus</h4><p>${sp.focus}</p></div><div class="sec"><h4>Pregunta central</h4><p>${sp.q}</p></div><div class="sec"><h4>Per què passa · el context</h4><p>${sp.cause}</p></div>`});});
+    band.appendChild(seg);
+  });
+  timeline.appendChild(band);
+  if(H < periodTop+54+34){ H=periodTop+54+34; timeline.style.height=H+'px'; }
+
+  // recentra
+  stage.scrollTop=Math.max(0,axisY-vh/2);
+  stage.scrollLeft=0;
+}
+
+/* ============ MODAL INFO / CARACTERÍSTIQUES ============ */
+const info=document.getElementById('info'),infocard=document.getElementById('infocard');
+function openInfo(o){info.style.setProperty('--cc',o.c||'#ffc94d');infocard.innerHTML=`<div class="pk">${o.pk}</div><h2>${o.h}</h2>${o.html}`;info.classList.add('on');}
+function closeInfo(){info.classList.remove('on');}
+document.getElementById('infoclose').onclick=e=>{e.stopPropagation();closeInfo();};
+info.addEventListener('click',e=>{if(e.target===info)closeInfo();});
+document.getElementById('charbtn').onclick=e=>{e.stopPropagation();openCharacteristics();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&info.classList.contains('on'))closeInfo();});
+function openCharacteristics(){
+  const D=ERA_DATA[curEra];
+  openInfo({pk:'Característiques comunes',h:D.char.h,c:D.char.c,
+    html:`<div class="sec"><p>${D.char.intro}</p></div>`+
+         D.traits.map(t=>`<div class="trait"><b>${t[0]}</b><span>${t[1]}</span></div>`).join('')});
+}
+
+/* ============ ETAPES + LLEGENDA ============ */
+const ERAS=[{n:"Antiga",r:"I",k:"antiga"},{n:"Medieval",r:"II",k:"medieval"},{n:"Moderna",r:"III",k:"moderna"},{n:"Contemporània",r:"IV",k:"contemporania"}];
+const erasEl=document.getElementById('eras');
+function renderEras(){
+  erasEl.innerHTML='';
+  ERAS.forEach(e=>{const b=document.createElement('button');b.className='era'+(e.k===curEra?' on':'');
+    b.innerHTML=`<span class="rn">${e.r}</span><span>${e.n}</span>`;
+    b.onclick=()=>{ if(e.k===curEra){closeDetail();stage.scrollTo({left:0,behavior:'smooth'});} else { switchEra(e.k); } };
+    erasEl.appendChild(b);});
+}
+function switchEra(key){
+  closeDetail();
+  buildEra(key);
+  brandtxt.textContent='Eix · '+ERA_DATA[key].brand;
+  renderEras();
+}
+const legendEl=document.getElementById('legend');
+Object.values(CAT).forEach(c=>{const d=document.createElement('div');d.className='lg';d.innerHTML=`<i style="background:${c.c};box-shadow:0 0 8px ${c.c}"></i>${c.name}`;legendEl.appendChild(d);});
+
+/* ============ DETALL ============ */
+const detail=document.getElementById('detail'),media=document.getElementById('media'),pbody=document.getElementById('pbody'),
+  pos=document.getElementById('pos'),prevB=document.getElementById('prev'),nextB=document.getElementById('next'),card3d=document.getElementById('card3d');
+let cur=-1;
+function openDetail(i){cur=i;render();detail.classList.add('on');}
+function closeDetail(){detail.classList.remove('on');cur=-1;}
+function render(){
+  const it=sorted[cur], cat=CAT[it.cat], c=cat.c, isT=it.t==='thought';
+  card3d.style.setProperty('--cc',c);
+  media.style.setProperty('--cc',c);
+  media.innerHTML=`<div class="badge" style="color:${c}">${cat.name}</div>`+
+    (it.img?`<img src="${it.img}" alt="${it.name}" onerror="this.remove()">`:'')+
+    `<div class="glowill">${it.ill?ILL(it.ill,c):MONO(it.name,c)}</div>`;
+  pbody.innerHTML=
+    `<div class="pk">${cat.name} · ${it.date} · ${centuryLabel(it.y)}</div>
+     <h2>${it.name}</h2>${it.sub?`<div class="drole">${it.sub}</div>`:''}
+     <div class="sec"><h4>${isT?'El pensament':'Què passa'}</h4><p>${it.lead}</p></div>
+     <div class="sec"><h4>${isT?'Context i connexió':'Per què importa per al pensament'}</h4><p>${it.link}</p></div>`;
+  pos.textContent=`${cur+1} / ${sorted.length} · ${it.date}`;
+  prevB.disabled=cur===0; nextB.disabled=cur===sorted.length-1; pbody.scrollTop=0;
+}
+prevB.onclick=e=>{e.stopPropagation();if(cur>0){cur--;render();}};
+nextB.onclick=e=>{e.stopPropagation();if(cur<sorted.length-1){cur++;render();}};
+document.getElementById('closeb').onclick=e=>{e.stopPropagation();closeDetail();};
+detail.addEventListener('click',e=>{if(e.target===detail)closeDetail();});
+
+document.addEventListener('keydown',e=>{
+  if(detail.classList.contains('on')){
+    if(e.key==='ArrowRight'){e.preventDefault();nextB.click();}
+    else if(e.key==='ArrowLeft'){e.preventDefault();prevB.click();}
+    else if(e.key==='Escape')closeDetail();
+  }
+});
+
+/* ============ TOAST ============ */
+/* ============ TOAST ============ */
+let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600);}
+
+/* ============ DRAG + WHEEL ============ */
+/* ============ DRAG + WHEEL ============ */
+let down=false,sx=0,sl=0;
+stage.addEventListener('pointerdown',e=>{if(e.target.closest('.node')||e.target.closest('.pseg'))return;down=true;sx=e.clientX;sl=stage.scrollLeft;stage.classList.add('drag');});
+window.addEventListener('pointerup',()=>{down=false;stage.classList.remove('drag');});
+window.addEventListener('pointermove',e=>{if(down)stage.scrollLeft=sl-(e.clientX-sx);});
+stage.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){stage.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
+
+/* ============ INICI ============ */
+renderEras();
+buildEra('antiga');
+
+/* ============ FONS 3D ============ */
+/* ============ FONS 3D (estrelles) — opcional, degrada amb gràcia ============ */
+(function(){
+  const s=document.createElement('script');
+  s.src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+  s.onload=initSpace; s.onerror=()=>{};
+  document.head.appendChild(s);
+})();
+function initSpace(){
+  try{
+    if(typeof THREE==='undefined')return;
+    const cv=document.getElementById('space');
+    const renderer=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    function size(){renderer.setSize(window.innerWidth,window.innerHeight);}
+    size();
+    const scene=new THREE.Scene();
+    const cam=new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,1,2000);
+    cam.position.z=600;
+    const N=900, pos=new Float32Array(N*3), col=new Float32Array(N*3);
+    const palette=[[1,.79,.30],[1,.42,.42],[.74,.58,1],[.18,.88,.78],[.8,.85,1]];
+    for(let i=0;i<N;i++){
+      pos[i*3]=(Math.random()-.5)*1800; pos[i*3+1]=(Math.random()-.5)*1200; pos[i*3+2]=(Math.random()-.5)*1000;
+      const p=palette[(Math.random()*palette.length)|0]; col[i*3]=p[0];col[i*3+1]=p[1];col[i*3+2]=p[2];
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+    const mat=new THREE.PointsMaterial({size:2.4,vertexColors:true,transparent:true,opacity:.85});
+    const pts=new THREE.Points(geo,mat); scene.add(pts);
+    let mx=0,my=0;
+    window.addEventListener('mousemove',e=>{mx=(e.clientX/window.innerWidth-.5);my=(e.clientY/window.innerHeight-.5);});
+    window.addEventListener('resize',()=>{cam.aspect=window.innerWidth/window.innerHeight;cam.updateProjectionMatrix();size();});
+    (function loop(){requestAnimationFrame(loop);
+      pts.rotation.y+=0.0006; pts.rotation.x+=0.0002;
+      cam.position.x+=((mx*120)-cam.position.x)*0.03; cam.position.y+=((-my*80)-cam.position.y)*0.03; cam.lookAt(0,0,0);
+      renderer.render(scene,cam);})();
+  }catch(e){/* fons CSS de reserva */}
+}
+
+</script>
+</body>
+</html>
