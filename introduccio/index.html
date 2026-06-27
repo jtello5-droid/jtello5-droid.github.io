@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Per què ets aquí?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{--void-0:#0a0d18;--bone:#ece8dd;--bone-dim:#9a978e;--bone-faint:#5b5a57;--star:#cba86a;--star-soft:rgba(203,168,106,.5);--hair:rgba(236,232,221,.12)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{background:var(--void-0);color:var(--bone);font-family:'Spectral',Georgia,serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .starfield{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.65}
+  .starfield::before,.starfield::after{content:"";position:absolute;inset:-50%;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(236,232,221,.6), transparent),
+      radial-gradient(1px 1px at 70% 60%, rgba(236,232,221,.4), transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(236,232,221,.5), transparent),
+      radial-gradient(1px 1px at 85% 20%, rgba(236,232,221,.35), transparent),
+      radial-gradient(1px 1px at 55% 45%, rgba(236,232,221,.45), transparent),
+      radial-gradient(1px 1px at 15% 70%, rgba(236,232,221,.3), transparent),
+      radial-gradient(1px 1px at 90% 85%, rgba(236,232,221,.4), transparent),
+      radial-gradient(1px 1px at 33% 15%, rgba(236,232,221,.3), transparent);
+    background-repeat:repeat;background-size:50% 50%;animation:drift 260s linear infinite}
+  .starfield::after{background-size:38% 38%;opacity:.5;animation-duration:380s;animation-direction:reverse}
+  @keyframes drift{from{transform:translateY(0)}to{transform:translateY(6%)}}
+  .depthwash{position:fixed;inset:0;z-index:0;pointer-events:none;transition:background 1.6s ease}
+  #stageHost{position:relative;z-index:2;height:100%}
+  .stage{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:9vh 7vw;text-align:center}
+  .stage.active{display:flex;animation:descend 1.3s cubic-bezier(.2,.7,.2,1) both}
+  .stage.opt.active{animation:fadeonly .9s ease both}
+  @keyframes descend{from{opacity:0;transform:translateY(-26px);filter:blur(3px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+  @keyframes fadeonly{from{opacity:0}to{opacity:1}}
+  .mother{font-family:'Cormorant';font-weight:300;font-size:clamp(2.8rem,9vw,7rem);line-height:1.02;letter-spacing:-.01em}
+  .mother em{font-style:italic;color:var(--star)}
+  .question{font-family:'Cormorant';font-weight:300;font-size:clamp(2rem,5.6vw,4.3rem);line-height:1.1;max-width:19ch}
+  .question em{font-style:italic;color:var(--star)}
+  .opt-q{font-family:'Cormorant';font-weight:300;font-style:italic;font-size:clamp(1.2rem,2.7vw,1.85rem);color:var(--bone-dim);margin-bottom:2rem;max-width:28ch;line-height:1.25}
+  .opt-row{display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem 1.4rem;margin-bottom:2.4rem;max-width:860px}
+  .opt-chip{font-family:'Spectral';font-weight:400;font-size:clamp(.82rem,1.5vw,1.02rem);letter-spacing:.03em;color:var(--bone);position:relative;padding-bottom:5px;transition:color .6s ease,opacity .6s ease}
+  .opt-chip.explored{color:var(--bone-faint);opacity:.45}
+  .opt-chip.upcoming{color:var(--bone-dim);opacity:.6}
+  .opt-chip.current{color:var(--star)}
+  .opt-chip.current::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;background:var(--star);box-shadow:0 0 8px var(--star-soft)}
+  .opt-imp{max-width:38ch}
+  .opt-imp .head{font-family:'Cormorant';font-weight:500;font-size:clamp(1.5rem,3.4vw,2.35rem);line-height:1.14;color:var(--bone);margin-bottom:.8rem;opacity:0;animation:emerge 1.1s cubic-bezier(.2,.7,.2,1) .25s forwards}
+  .opt-imp .body{font-family:'Spectral';font-weight:300;font-size:clamp(1rem,1.85vw,1.2rem);line-height:1.62;color:var(--bone-dim);opacity:0;animation:fadein 1s ease .7s forwards}
+  .descent{display:flex;flex-direction:column;align-items:center}
+  .descent .lead{font-family:'Cormorant';font-weight:300;font-style:italic;color:var(--bone-dim);font-size:clamp(1.1rem,2.3vw,1.5rem);margin-bottom:2rem;line-height:1.4;max-width:28ch}
+  .descent .layer{font-family:'Spectral';font-weight:300;font-size:clamp(1.05rem,2.2vw,1.5rem);color:var(--bone);padding:.3rem 0;opacity:0;animation:rise .7s ease forwards}
+  .descent .sep{color:var(--star-soft);font-size:.9rem;line-height:1;opacity:0;animation:rise .7s ease forwards}
+  .descent .layer.last{color:var(--star)}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  .bridge{display:flex;flex-direction:column;align-items:center;gap:1.5rem;max-width:28ch}
+  .bridge .from{font-family:'Spectral';font-weight:300;font-style:italic;font-size:clamp(1.05rem,2.3vw,1.5rem);color:var(--bone-faint);line-height:1.45;opacity:0;animation:fadein 1s ease .2s forwards}
+  .bridge .arrow{width:1px;height:46px;background:linear-gradient(var(--star-soft),transparent);opacity:0;animation:growline 1s ease 1s forwards;transform-origin:top}
+  .bridge .to{font-family:'Cormorant';font-weight:400;font-size:clamp(1.8rem,4.6vw,3.2rem);line-height:1.12;opacity:0;animation:emerge 1.4s cubic-bezier(.2,.7,.2,1) 1.5s forwards}
+  .bridge .to em{font-style:italic;color:var(--star)}
+  @keyframes fadein{to{opacity:1}}
+  @keyframes growline{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
+  @keyframes emerge{from{opacity:0;transform:scale(.9) translateY(14px);filter:blur(6px)}to{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}}
+  .tension{font-family:'Cormorant';font-weight:300;font-style:italic;font-size:clamp(1.6rem,4vw,2.7rem);line-height:1.28;max-width:25ch;color:var(--bone)}
+  .tension em{color:var(--star);font-style:italic}
+  .closing{font-family:'Cormorant';font-weight:300;font-style:italic;font-size:clamp(1.7rem,4.2vw,2.9rem);line-height:1.3;max-width:24ch;color:var(--bone)}
+  .closing em{color:var(--star)}
+  .tie{font-family:'Spectral';font-weight:300;color:var(--bone-dim);font-size:clamp(.95rem,1.8vw,1.15rem);line-height:1.7;max-width:46ch;margin-top:2rem}
+  .depth{position:fixed;left:clamp(18px,3.5vw,46px);top:50%;transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .depth .cap{font-family:'Spectral';font-size:.7rem;color:var(--bone-faint)}
+  .depth .track{width:1px;height:150px;background:var(--hair);position:relative;overflow:hidden}
+  .depth .fill{position:absolute;top:0;left:0;width:100%;background:var(--star);transition:height 1.3s cubic-bezier(.2,.7,.2,1);box-shadow:0 0 11px var(--star-soft)}
+  .arrows{position:fixed;bottom:clamp(20px,5vh,40px);right:clamp(20px,4vw,46px);z-index:6;display:flex;gap:8px}
+  .arrows button{width:38px;height:38px;border:1px solid var(--hair);background:transparent;color:var(--bone-dim);cursor:pointer;border-radius:50%;font-size:1rem;line-height:1;transition:all .35s ease}
+  .arrows button:hover:not(:disabled){border-color:var(--star);color:var(--star)}
+  .arrows button:disabled{opacity:.25;cursor:default}
+  .counter{position:fixed;bottom:clamp(22px,5vh,42px);left:50%;transform:translateX(-50%);z-index:6;font-family:'Spectral';font-size:.66rem;letter-spacing:.22em;color:var(--bone-faint)}
+  .treewrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+  svg.tree{width:100%;height:100%;max-width:1180px;max-height:84vh}
+  .tree .edge{stroke:var(--star-soft);stroke-width:1;fill:none}
+  .tree .node-dot{fill:var(--star);filter:drop-shadow(0 0 6px var(--star-soft))}
+  .tree .mother-txt{font-family:'Cormorant';font-style:italic;fill:var(--star)}
+  .tree .r-txt{font-family:'Cormorant';fill:var(--bone)}
+  .tree .c-txt{font-family:'Spectral';font-weight:300;fill:var(--bone-dim)}
+  .tree-title{position:absolute;top:7vh;left:50%;transform:translateX(-50%);font-family:'Spectral';font-weight:300;letter-spacing:.28em;text-transform:uppercase;font-size:.72rem;color:var(--bone-faint);z-index:3}
+  @media (max-width:680px){.depth{display:none}.opt-row{flex-direction:column;gap:.55rem}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.stage.active{opacity:1;transform:none;filter:none}.descent .layer,.descent .sep,.bridge .from,.bridge .arrow,.bridge .to,.opt-imp .head,.opt-imp .body{opacity:1;transform:none;filter:none}}
+</style>
+</head>
+<body>
+  <div class="starfield"></div>
+  <div class="depthwash" id="wash"></div>
+  <div class="depth"><div class="cap">·</div><div class="track"><div class="fill" id="depthFill" style="height:4%"></div></div><div class="cap">∞</div></div>
+  <div id="stageHost"></div>
+  <div class="counter" id="counter"></div>
+  <div class="arrows"><button id="prev" title="Anterior">←</button><button id="next" title="Següent">→</button></div>
+<script>
+const P_CAUSA=["Determinisme","Llibertat"];
+const P_JONAT=["El cervell","Una propietat emergent","Una realitat immaterial"];
+const P_IDENT=["Continuïtat corporal","Continuïtat psicològica","Una substància permanent","La identitat admet graus"];
+const P_COPIA=["La identitat és informació","Cal el substrat físic","La identitat no és el decisiu"];
+const P_CONS=["És activitat cerebral","Un residu irreductible","La certesa primera"];
+const P_MON=["Realisme","Fenomenisme","Pragmatisme","Escepticisme"];
+const P_CONEIXER=["Empirisme","Racionalisme","Pragmatisme","Escepticisme"];
+const P_ORIGEN=["Matèria eterna","Una causa primera","Sorgiment del no-res","Un fet sense causa"];
+const P_RES=["L'ésser és necessari","Tot té una raó","Un fet últim","El límit de la raó"];
+const P_PERQUE=["Fins instrumentals","Autorealització","Cap finalitat","La felicitat"];
+const P_VIURE=["Hedonisme","Plenitud","Autodomini","Sentit"];
+const P_OBJ=["Objectivisme moral","Relativisme cultural","Subjectivisme"];
+const P_SENTIT=["Sentit transcendent","Sentit creat","Nihilisme","El sentit es viu"];
+const P_MORT=["Un mal absolut","Indiferent per a nosaltres","Un trànsit","Condició del sentit"];
+function opt(q,panel,cur,done,head,body){return {t:"opt",q,panel,cur,done,head,body};}
+const TREE_READINGS=[
+  {r:"Què ha causat el meu comportament?",
+   c:["Determinisme o llibertat?","Qui és el jo?","Què em fa el mateix en el temps?","Seria jo una còpia?","Què és la consciència?"]},
+  {r:"Què fa que jo estigui aquí i ara?",
+   c:["De què estic fet?","D'on prové tot?","Per què hi ha quelcom i no res?"]},
+  {r:"Què és aquest «aquí»?",
+   c:["El món és real?","Què podem conèixer?"]},
+  {r:"Per a què hi sóc?",
+   c:["Amb quina finalitat visc?","Què és viure bé?","Hi ha un bé objectiu?","Quin sentit té existir?","Què és la mort?"]}
+];
+const SLIDES=[
+ {t:"cover"},
+ {t:"tree",mode:"brief"},
+ {t:"q", text:"Per què sóc aquí,<br>fent això, <em>ara</em>?"},
+
+ opt("Per què sóc aquí, fent això, ara?",P_CAUSA,0,[],
+   "El determinisme.",
+   "És raonable: tot fet sembla tenir una causa, i la conducta s'explica per condicions anteriors. Ara bé, si res no depèn de mi, costa entendre la responsabilitat i l'experiència viva de decidir."),
+ opt("Per què sóc aquí, fent això, ara?",P_CAUSA,1,[0],
+   "La llibertat.",
+   "És raonable: vivim com a propi l'acte de decidir i sembla que hauríem pogut triar altrament. Ara bé, tota decisió té motius i condicionants, i és difícil assenyalar on s'interromp la cadena causal."),
+ {t:"b", from:"Si l'acció procedeix de mi…", to:"…<em>qui</em> és aquest «jo»?"},
+
+ opt("Qui és el «jo»? És quelcom material o no?",P_JONAT,0,[],
+   "Seria el cervell.",
+   "És raonable: tota activitat mental es correspon amb processos cerebrals, i una lesió els altera. Ara bé, descriure neurones no sembla capturar què se sent en viure una experiència."),
+ opt("Qui és el «jo»? És quelcom material o no?",P_JONAT,1,[0],
+   "Seria una propietat emergent.",
+   "És raonable: la ment sorgiria del cervell sense reduir-s'hi, com la liquiditat sorgeix de molècules que no són líquides. Ara bé, no s'acaba d'explicar com la matèria, per complexa que sigui, genera experiència conscient."),
+ opt("Qui és el «jo»? És quelcom material o no?",P_JONAT,2,[0,1],
+   "Seria una realitat immaterial.",
+   "És raonable: el pensament i la consciència semblen d'una naturalesa distinta de la matèria. Ara bé, si són dues realitats separades, costa explicar com quelcom immaterial mou un cos físic."),
+ {t:"b", from:"Sigui el que sigui el jo, el cos i la ment canvien al llarg dels anys…", to:"…com una nau a què se substitueixen totes les peces: <em>què en garanteix la identitat</em>?"},
+
+ opt("Què em fa ser el mateix al llarg del temps?",P_IDENT,0,[],
+   "La continuïtat del cos.",
+   "És raonable: som el mateix organisme viu que perdura sense interrupció, encara que es renovin els materials. Ara bé, amb els anys el cos canvia gairebé del tot, i un trasplantament de cervell ens faria dubtar."),
+ opt("Què em fa ser el mateix al llarg del temps?",P_IDENT,1,[0],
+   "La continuïtat psicològica.",
+   "És raonable: el que ens lliga al passat és la memòria i el caràcter, no la matèria concreta. Ara bé, els records fallen i es transformen, i fundar-hi la identitat sembla ja pressuposar-la: cal ser el mateix per recordar."),
+ opt("Què em fa ser el mateix al llarg del temps?",P_IDENT,2,[0,1],
+   "Una substància permanent.",
+   "És raonable: sota tot canvi sembla haver-hi algú que el pateix, un mateix que dura. Ara bé, aquest subjecte no s'observa enlloc: només trobem estats que se succeeixen, mai el «jo» nu que els tindria."),
+ opt("Què em fa ser el mateix al llarg del temps?",P_IDENT,3,[0,1,2],
+   "Potser admet graus.",
+   "És raonable: la continuïtat es manté en grau divers, i potser importa com de connectats estem amb el passat, no la identitat estricta. Ara bé, costa acceptar que «ser jo» sigui qüestió de més o menys, i no un sí o no."),
+ {t:"b", from:"Si el decisiu fos la continuïtat psicològica, es podria traslladar o duplicar…", to:"…aquella còpia —o aquella IA—, <em>seria jo</em>?"},
+
+ opt("Si es reprodueix la meva ment en una còpia o una IA, seria jo?",P_COPIA,0,[],
+   "Seria jo.",
+   "És raonable: si el jo és informació —records i caràcter—, una rèplica o un trasllat a un altre suport el conservaria. Ara bé, original i còpia podrien existir alhora, i dos individus no poden ser el mateix jo."),
+ opt("Si es reprodueix la meva ment en una còpia o una IA, seria jo?",P_COPIA,1,[0],
+   "Seria un altre.",
+   "És raonable: si el jo depèn d'aquest cervell concret, cap còpia no és l'original, per idèntica que sigui: només n'imita el contingut. Ara bé, aleshores substituir gradualment totes les neurones també hauria de destruir-me, cosa poc plausible."),
+ opt("Si es reprodueix la meva ment en una còpia o una IA, seria jo?",P_COPIA,2,[0,1],
+   "Potser la pregunta està mal plantejada.",
+   "És raonable: si es poden fer dues còpies, cap regla no diu quina sóc; potser importa la continuïtat, que admet graus, i no la identitat numèrica. Ara bé, seguim preocupant-nos per si serem nosaltres, com si la identitat sí que importés."),
+ {t:"tension", text:"El «jo», que semblava evident,<br>es revela <em>problemàtic</em>."},
+ {t:"b", from:"De tot plegat, el més indubtable és que ara mateix estic experimentant quelcom…", to:"…què és, doncs, <em>l'experiència conscient</em>?"},
+
+ opt("Què és l'experiència conscient, això que visc des de dins?",P_CONS,0,[],
+   "Seria activitat cerebral.",
+   "És raonable: tota vivència coincideix amb processos del cervell, i modificar-los modifica l'experiència. Ara bé, per molt detall neuronal que es doni, sembla quedar fora per què aquests processos «se senten» d'alguna manera."),
+ opt("Què és l'experiència conscient, això que visc des de dins?",P_CONS,1,[0],
+   "Hi hauria un residu irreductible.",
+   "És raonable: es pot descriure tot el funcionament i encara preguntar per què hi ha experiència, i no un processament a les fosques. Ara bé, potser aquest residu només reflecteix els límits actuals del coneixement, no una realitat a part."),
+ opt("Què és l'experiència conscient, això que visc des de dins?",P_CONS,2,[0,1],
+   "Seria la certesa primera.",
+   "És raonable: puc dubtar del món, però no del fet que ara experimento quelcom; és el més indubtable. Ara bé, que sigui indubtable no ens diu què és ni com es relaciona amb el cervell."),
+ {t:"b", from:"Si la certesa més ferma és la de la meva experiència, i no la del món…", to:"…el món extern, <em>existeix realment</em>?"},
+
+ opt("El món que percebo, és real? I si fos una simulació?",P_MON,0,[],
+   "El realisme.",
+   "És raonable: el món oposa resistència i és compartit per tots, cosa que suggereix que existeix amb independència de mi. Ara bé, tot accés al món passa per la percepció, de manera que no el podem comparar mai amb com és «en si»."),
+ opt("El món que percebo, és real? I si fos una simulació?",P_MON,1,[0],
+   "El fenomenisme.",
+   "És raonable: de fet només tenim allò que apareix a la consciència; no podem sortir de l'experiència per verificar res. Ara bé, si només hi ha fenòmens, costa explicar per què són tan regulars i compartits."),
+ opt("El món que percebo, és real? I si fos una simulació?",P_MON,2,[0,1],
+   "El pragmatisme.",
+   "És raonable: si l'experiència és coherent i permet actuar, la qüestió de la seva «realitat» perd força pràctica. Ara bé, sembla eludir la pregunta més que respondre-la: voler saber si hi ha món no és cap caprici."),
+ opt("El món que percebo, és real? I si fos una simulació?",P_MON,3,[0,1,2],
+   "L'escepticisme.",
+   "És raonable: un somni o una simulació perfectes serien indistingibles de la realitat, i no ho podríem detectar. Ara bé, el dubte radical és impossible de viure i, portat al límit, es gira contra si mateix."),
+ {t:"b", from:"Si no es pot garantir que la percepció correspongui al món…", to:"…què podem <em>conèixer</em> amb fonament?"},
+
+ opt("Què podem conèixer, i d'on prové el coneixement?",P_CONEIXER,0,[],
+   "L'empirisme.",
+   "És raonable: tot el que sabem sembla entrar, d'alguna manera, per l'experiència. Ara bé, hi ha veritats —les matemàtiques— que no semblen venir dels sentits, i tota experiència ja pressuposa formes d'ordenar-la."),
+ opt("Què podem conèixer, i d'on prové el coneixement?",P_CONEIXER,1,[0],
+   "El racionalisme.",
+   "És raonable: els sentits enganyen, i la raó ofereix veritats necessàries i universals. Ara bé, una raó sense experiència corre el risc de construir sistemes coherents però buits, desconnectats del món."),
+ opt("Què podem conèixer, i d'on prové el coneixement?",P_CONEIXER,2,[0,1],
+   "El pragmatisme.",
+   "És raonable: anomenem coneixement allò que funciona i resisteix la prova de la pràctica. Ara bé, que una cosa funcioni no garanteix que sigui veritable: pot ser útil i falsa alhora."),
+ opt("Què podem conèixer, i d'on prové el coneixement?",P_CONEIXER,3,[0,1,2],
+   "L'escepticisme.",
+   "És raonable: cap font no dona garanties absolutes, i tota certesa s'ha vist revisada alguna vegada. Ara bé, negar tot coneixement és autocontradictori, perquè això ja seria un coneixement."),
+ {t:"b", from:"Donem per descomptat que hi ha un món i que jo hi sóc…", to:"…però què fa que <em>existeixi tot plegat</em>?"},
+
+ {t:"d", lead:"Tot el que existeix —jo inclòs— es pot descompondre en components cada cop més elementals.",
+   layers:["Jo","un cos","cèl·lules","àtoms","partícules elementals"]},
+ {t:"b", from:"El descens s'atura en allò elemental…", to:"…i això elemental, <em>d'on prové</em>?"},
+
+ opt("D'on prové tot? És etern, s'origina a si mateix, o té una causa?",P_ORIGEN,0,[],
+   "Seria etern.",
+   "És raonable: si res no ve del no-res, potser sempre hi ha hagut quelcom, sense origen. Ara bé, una sèrie infinita cap enrere és difícil de concebre, i no explica per què hi ha aquesta realitat i no una altra."),
+ opt("D'on prové tot? És etern, s'origina a si mateix, o té una causa?",P_ORIGEN,1,[0],
+   "Hi hauria una causa primera.",
+   "És raonable: per evitar un regrés infinit, sembla caldre un primer origen que no depengui de res. Ara bé, si tot necessita causa, també caldria preguntar-la d'aquesta; i si ella no en necessita, per què la matèria sí?"),
+ opt("D'on prové tot? És etern, s'origina a si mateix, o té una causa?",P_ORIGEN,2,[0,1],
+   "Sorgiria del buit.",
+   "És raonable: en física, el «buit» no és inert sinó ple de fluctuacions de les quals pot emergir estructura. Ara bé, aquest buit ja és quelcom amb propietats i lleis: no és el no-res absolut, i el problema es desplaça."),
+ opt("D'on prové tot? És etern, s'origina a si mateix, o té una causa?",P_ORIGEN,3,[0,1,2],
+   "Seria un fet últim.",
+   "És raonable: potser preguntar la causa del tot aplica al conjunt una exigència que només val dins seu. Ara bé, renunciar a l'explicació pot ser prematur, i deixa insatisfeta la pregunta inicial."),
+ {t:"b", from:"I si descendim fins al fonament…", to:"…per què hi ha <em>quelcom</em> en lloc de res?"},
+
+ opt("Per què hi ha quelcom en lloc de res?",P_RES,0,[],
+   "L'ésser seria necessari.",
+   "És raonable: potser el no-res absolut ni es pot pensar sense contradicció, de manera que havia d'haver-hi quelcom. Ara bé, que no puguem pensar el no-res no demostra que sigui impossible: podria ser un límit nostre."),
+ opt("Per què hi ha quelcom en lloc de res?",P_RES,1,[0],
+   "Tot tindria una raó.",
+   "És raonable: res no sembla passar per atzar absolut, així que també l'existència del conjunt en demanaria una. Ara bé, aplicar aquest principi a la totalitat ens duu a una causa fora del món, difícil de justificar."),
+ opt("Per què hi ha quelcom en lloc de res?",P_RES,2,[0,1],
+   "Seria un fet últim.",
+   "És raonable: tota explicació remet a una altra cosa, i en algun punt la cadena s'ha d'aturar. Ara bé, aturar-la justament aquí sembla arbitrari: per què no un graó més enllà?"),
+ opt("Per què hi ha quelcom en lloc de res?",P_RES,3,[0,1,2],
+   "Seria el límit de la raó.",
+   "És raonable: potser hi ha preguntes que assenyalen la frontera del que es pot respondre, i només es poden contemplar. Ara bé, declarar una pregunta «sense resposta» pot ser una manera de deixar de pensar-la."),
+ {t:"tension", text:"Hem descendit tan avall<br>com és <em>possible</em>."},
+ {t:"b", from:"Hem indagat d'on vinc i què existeix…", to:"…resta l'altra meitat: <em>amb quina finalitat</em> existeixo?"},
+
+ opt("Amb quina finalitat visc?",P_PERQUE,0,[],
+   "Serien fins instrumentals.",
+   "És raonable: estudiem per treballar, treballem per viure; gran part del que fem són mitjans. Ara bé, una cadena de mitjans sense cap fi últim no s'aguanta: alguna cosa s'ha de voler per ella mateixa."),
+ opt("Amb quina finalitat visc?",P_PERQUE,1,[0],
+   "Seria l'autorealització.",
+   "És raonable: tendim a desplegar les capacitats pròpies i a arribar a ser allò que podem ser. Ara bé, «realitzar-se» no diu en què: un projecte intens també pot ser destructiu, i cal un criteri del que val la pena."),
+ opt("Amb quina finalitat visc?",P_PERQUE,2,[0,1],
+   "Potser cap.",
+   "És raonable: res no garanteix que l'existència vingui amb un fi donat d'avançada. Ara bé, viure sense cap fi sembla impossible a la pràctica: sempre actuem perseguint alguna cosa."),
+ opt("Amb quina finalitat visc?",P_PERQUE,3,[0,1,2],
+   "La felicitat.",
+   "És raonable: tota la resta es vol amb vista a la felicitat, i aquesta no es vol per a res més: sembla el fi últim. Ara bé, «felicitat» és tan ampli que, sense precisar-lo, gairebé no diu res."),
+ {t:"b", from:"Si tot s'ordena, en darrer terme, a la felicitat…", to:"…en què consisteix <em>viure bé</em>?"},
+
+ opt("Què és viure bé? En què consisteix la felicitat?",P_VIURE,0,[],
+   "L'hedonisme.",
+   "És raonable: busquem el plaer i defugim el dolor de manera natural. Ara bé, una vida només de plaers sovint deixa buit, i sacrificaríem plaer per coses que valorem més."),
+ opt("Què és viure bé? En què consisteix la felicitat?",P_VIURE,1,[0],
+   "La plenitud.",
+   "És raonable: viure bé seria desplegar el millor d'un mateix, no només passar-ho bé. Ara bé, això exigeix esforç i renúncia, i no sempre coincideix amb sentir-se feliç."),
+ opt("Què és viure bé? En què consisteix la felicitat?",P_VIURE,2,[0,1],
+   "L'autodomini.",
+   "És raonable: si la pau depèn de dominar desitjos i temors, no queda a mercè de la sort. Ara bé, una indiferència excessiva al món pot allunyar-nos dels vincles i les passions que donen vida."),
+ opt("Què és viure bé? En què consisteix la felicitat?",P_VIURE,3,[0,1,2],
+   "El sentit.",
+   "És raonable: una vida plena és la que significa alguna cosa per a qui la viu, més enllà del plaer o l'èxit. Ara bé, el «sentit» pot ser il·lusori: cal preguntar si val per si mateix o segons en què consisteixi."),
+ {t:"b", from:"Però allò que a mi em sembla bo, és vàlid per a tothom?", to:"…hi ha un <em>bé objectiu</em>, o és relatiu?"},
+
+ opt("Hi ha un bé vàlid per a tothom, o és relatiu?",P_OBJ,0,[],
+   "L'objectivisme moral.",
+   "És raonable: hi ha actes —la crueltat gratuïta— que jutgem dolents sigui quina sigui la cultura. Ara bé, la diversitat moral entre pobles i èpoques fa difícil assenyalar quin seria aquest bé universal."),
+ opt("Hi ha un bé vàlid per a tothom, o és relatiu?",P_OBJ,1,[0],
+   "El relativisme cultural.",
+   "És raonable: el que es considera correcte varia molt entre societats, i imposar la pròpia mirada sol ser arrogant. Ara bé, si tot val segons la cultura, no podríem criticar cap pràctica, ni les que ens semblen clarament injustes."),
+ opt("Hi ha un bé vàlid per a tothom, o és relatiu?",P_OBJ,2,[0,1],
+   "El subjectivisme.",
+   "És raonable: els valors semblen lligats a allò que cada persona sent i prefereix. Ara bé, aleshores costa explicar per què condemnem certs actes faci qui els faci, i el desacord moral perdria sentit."),
+ {t:"b", from:"I, en darrer terme, després de tot el que ens hem preguntat…", to:"…quin <em>sentit</em> té l'existència?"},
+
+ opt("Quin sentit té l'existència?",P_SENTIT,0,[],
+   "Un sentit transcendent.",
+   "És raonable: si hi ha un ordre superior, l'existència tindria una finalitat que la sosté. Ara bé, aquest ordre no és evident ni demostrable, i fonamentar-hi tot el sentit el fa dependre d'una creença."),
+ opt("Quin sentit té l'existència?",P_SENTIT,1,[0],
+   "Un sentit creat.",
+   "És raonable: encara que no vingui donat, podem conferir sentit amb les eleccions i els compromisos. Ara bé, un sentit que un mateix es dóna pot semblar fràgil o arbitrari: ¿i si demà decideixo el contrari?"),
+ opt("Quin sentit té l'existència?",P_SENTIT,2,[0,1],
+   "El nihilisme.",
+   "És raonable: res no garanteix que l'existència tingui una finalitat última, i assumir-ho seria lucidesa. Ara bé, viure com si res no importés és gairebé impossible: de fet tractem moltes coses com si valguessin."),
+ opt("Quin sentit té l'existència?",P_SENTIT,3,[0,1,2],
+   "El sentit es viu.",
+   "És raonable: el sentit potser no es troba pensant, sinó en estimar, crear i comprometre's. Ara bé, sense cap reflexió sobre quins compromisos valen, qualsevol activitat intensa comptaria com a sentit."),
+ {t:"b", from:"I tot això es juga sobre el rerefons que l'existència s'acaba…", to:"…i si fos precisament <em>la mort</em> el que dona valor a la vida?"},
+
+ opt("Què és la mort? Modifica el sentit de la vida?",P_MORT,0,[],
+   "Seria un mal absolut.",
+   "És raonable: la mort suprimeix tota possibilitat futura, i per això pot semblar el pitjor. Ara bé, si després no hi som per patir-ho, no és clar per a qui és un mal."),
+ opt("Què és la mort? Modifica el sentit de la vida?",P_MORT,1,[0],
+   "No seria res per a nosaltres.",
+   "És raonable: mentre som, la mort no hi és; quan hi és, ja no som, així que mai la patim. Ara bé, témer deixar d'existir i perdre el que estimem sembla del tot natural."),
+ opt("Què és la mort? Modifica el sentit de la vida?",P_MORT,2,[0,1],
+   "Seria un trànsit.",
+   "És raonable: si allò que som no s'esgota amb el cos, la mort seria una transició, no un final. Ara bé, no en tenim cap evidència, i tot el que sabem lliga la ment al funcionament del cos."),
+ opt("Què és la mort? Modifica el sentit de la vida?",P_MORT,3,[0,1,2],
+   "Seria la condició del sentit.",
+   "És raonable: precisament perquè és finita, la vida importa; el temps val perquè és comptat. Ara bé, també el sofriment és finitud, i no és evident que tota finitud doni valor."),
+
+ {t:"tree",mode:"full"},
+ {t:"closing", text:"D'una sola pregunta<br>n'han sorgit <em>totes les altres</em>.",
+   tie:"La llibertat, el jo, la identitat, la realitat, el coneixement, el fonament de l'ésser, el bé, el sentit, la mort. Aquestes són les qüestions que la humanitat no ha deixat mai de plantejar-se, i cadascuna defineix una de les grans branques de la filosofia."}
+];
+const WASH=[
+  "radial-gradient(120% 80% at 50% -10%, rgba(40,46,80,.30), transparent 60%)",
+  "radial-gradient(120% 90% at 50% -4%, rgba(36,40,76,.40), transparent 62%)",
+  "radial-gradient(120% 100% at 50% 4%, rgba(30,34,70,.48), transparent 64%)",
+  "radial-gradient(130% 108% at 50% 12%, rgba(24,28,64,.55), transparent 66%)",
+  "radial-gradient(140% 116% at 50% 20%, rgba(20,24,58,.62), transparent 68%)"
+];
+const host=document.getElementById('stageHost'),wash=document.getElementById('wash'),depthFill=document.getElementById('depthFill'),counter=document.getElementById('counter'),prevBtn=document.getElementById('prev'),nextBtn=document.getElementById('next');
+let cur=0;
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function build(s){
+  const st=el('section','stage'+(s.t==='opt'?' opt':''));
+  if(s.t==='cover'){st.appendChild(el('h1','mother','Per què<br><em>ets aquí?</em>'));}
+  else if(s.t==='q'){st.appendChild(el('h2','question',s.text));}
+  else if(s.t==='opt'){
+    st.appendChild(el('div','opt-q',s.q));
+    const row=el('div','opt-row');
+    s.panel.forEach((lab,i)=>{let cls='opt-chip ';if(i===s.cur)cls+='current';else if(s.done.includes(i))cls+='explored';else cls+='upcoming';row.appendChild(el('span',cls,lab));});
+    st.appendChild(row);
+    const imp=el('div','opt-imp');imp.appendChild(el('div','head',s.head));imp.appendChild(el('div','body',s.body));st.appendChild(imp);
+  }
+  else if(s.t==='d'){
+    const wrap=el('div','descent');wrap.appendChild(el('div','lead',s.lead));
+    s.layers.forEach((L,i)=>{const layer=el('div','layer'+(i===s.layers.length-1?' last':''),L);layer.style.animationDelay=(0.3+i*0.34)+'s';wrap.appendChild(layer);if(i<s.layers.length-1){const sep=el('div','sep','↓');sep.style.animationDelay=(0.47+i*0.34)+'s';wrap.appendChild(sep);}});
+    st.appendChild(wrap);
+  }
+  else if(s.t==='b'){const wrap=el('div','bridge');wrap.appendChild(el('div','from',s.from));wrap.appendChild(el('div','arrow'));wrap.appendChild(el('div','to',s.to));st.appendChild(wrap);}
+  else if(s.t==='tree'){
+    const t=el('div','tree-title',s.mode==='brief'?'Una pregunta, molts camins':'El mapa complet del recorregut');
+    st.appendChild(t);
+    const wrap=el('div','treewrap');
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('class','tree');svg.setAttribute('viewBox','0 0 1180 640');svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+    wrap.appendChild(svg);st.appendChild(wrap);
+    st._svg=svg;st._mode=s.mode;
+  }
+  else if(s.t==='tension'){st.appendChild(el('div','tension',s.text));}
+  else if(s.t==='closing'){st.appendChild(el('div','closing',s.text));st.appendChild(el('div','tie',s.tie));}
+  return st;
+}
+const built=SLIDES.map(build);
+built.forEach(b=>host.appendChild(b));
+
+const SVGNS="http://www.w3.org/2000/svg";
+function svgEl(tag,attrs){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function wrapTxt(text,max){const w=text.split(' ');const lines=[];let c='';for(const x of w){if((c+' '+x).trim().length>max){lines.push(c.trim());c=x;}else c=(c+' '+x).trim();}if(c)lines.push(c.trim());return lines;}
+function svgText(svg,x,y,lines,size,cls,anchor){const g=svgEl('g',{opacity:0});lines.forEach((ln,i)=>{const t=svgEl('text',{x,y:y+i*(size*1.12),'text-anchor':anchor||'middle','font-size':size,class:cls});t.textContent=ln;g.appendChild(t);});svg.appendChild(g);return g;}
+function svgDot(svg,x,y){const c=svgEl('circle',{cx:x,cy:y,r:3.2,class:'node-dot',opacity:0});svg.appendChild(c);return c;}
+function drawPath(p,delay,dur){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;p.animate([{strokeDashoffset:len},{strokeDashoffset:0}],{duration:dur,delay,fill:'forwards',easing:'cubic-bezier(.4,.6,.2,1)'});}
+function fadeEl(el,delay){el.animate([{opacity:0},{opacity:1}],{duration:650,delay,fill:'forwards',easing:'ease'});}
+
+function renderTree(svg,mode){
+  svg.innerHTML='';
+  const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const D=(d)=>reduce?0:d;
+  const cols=[150,490,830,1090];
+  const colX=[160,490,820,1020];
+  const mx=590;
+  if(mode==='brief'){
+    const my=110;
+    const m=svgText(svg,mx,my,["Per què ets aquí?"],40,'mother-txt','middle');fadeEl(m,D(200));
+    const xs=[210,490,770,1010];const ty=360;
+    TREE_READINGS.forEach((R,i)=>{
+      const p=svgEl('path',{d:`M ${mx} ${my+34} C ${mx} ${my+150}, ${xs[i]} ${my+130}, ${xs[i]} ${ty-46}`,class:'edge'});
+      svg.appendChild(p);drawPath(p,D(800+i*340),D(900));
+    });
+    xs.forEach((x,i)=>{
+      const d=svgDot(svg,x,ty-46);fadeEl(d,D(1300+i*340));
+      const g=svgText(svg,x,ty,wrapTxt(TREE_READINGS[i].r,17),21,'r-txt','middle');fadeEl(g,D(1450+i*340));
+    });
+    return;
+  }
+  // full
+  const my=66;
+  const m=svgText(svg,mx,my,["Per què ets aquí?"],36,'mother-txt','middle');fadeEl(m,D(150));
+  const ry=176;
+  let t=700;
+  TREE_READINGS.forEach((R,i)=>{
+    const x=colX[i];
+    const p=svgEl('path',{d:`M ${mx} ${my+30} C ${mx} ${my+90}, ${x} ${my+70}, ${x} ${ry-44}`,class:'edge'});
+    svg.appendChild(p);drawPath(p,D(t),D(820));
+    const rdot=svgDot(svg,x,ry-44);fadeEl(rdot,D(t+700));
+    const rg=svgText(svg,x,ry,wrapTxt(R.r,16),18,'r-txt','middle');fadeEl(rg,D(t+820));
+    const rlines=wrapTxt(R.r,16).length;
+    const spineTop=ry+rlines*20+6;
+    const step=Math.min(86,(600-spineTop)/Math.max(1,R.c.length));
+    const childY=R.c.map((_,j)=>spineTop+22+j*step);
+    const spine=svgEl('path',{d:`M ${x} ${spineTop} L ${x} ${childY[childY.length-1]}`,class:'edge'});
+    svg.appendChild(spine);drawPath(spine,D(t+1000),D(700));
+    R.c.forEach((cc,j)=>{
+      const cd=svgDot(svg,x,childY[j]);fadeEl(cd,D(t+1500+j*230));
+      const cg=svgText(svg,x,childY[j]+4,wrapTxt(cc,20),14.5,'c-txt','middle');fadeEl(cg,D(t+1600+j*230));
+    });
+    t+=420;
+  });
+}
+function go(n){
+  if(n<0||n>=SLIDES.length)return;
+  built[cur].classList.remove('active');cur=n;
+  const node=built[cur];node.classList.remove('active');void node.offsetWidth;node.classList.add('active');
+  if(SLIDES[cur].t==='tree'&&node._svg){renderTree(node._svg,node._mode);}
+  const prog=cur/(SLIDES.length-1);
+  wash.style.background=WASH[Math.min(WASH.length-1,Math.floor(prog*WASH.length))];
+  depthFill.style.height=(4+prog*96)+'%';
+  counter.textContent=(cur+1)+' / '+SLIDES.length;
+  prevBtn.disabled=(cur===0);nextBtn.disabled=(cur===SLIDES.length-1);
+}
+prevBtn.addEventListener('click',()=>go(cur-1));
+nextBtn.addEventListener('click',()=>go(cur+1));
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}});
+go(0);
+</script>
+</body>
+</html>
